@@ -84,7 +84,7 @@ export default function TaskPlannerDashboard() {
   const [showRoutineEditor, setShowRoutineEditor] = useState(false);
 
   // Base API URL
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
   // Logout function
   const handleLogout = () => {
