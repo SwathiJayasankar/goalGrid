@@ -1,6 +1,6 @@
 # GoalGrid: AI-Powered Personalized Task Planner
 
-Productive is a high-performance task planning workspace that blends AI strategic planning, calendar management, introspective reflection and performance analytics into one polished dashboard.
+GoalGrid is a high-performance task planning workspace that blends AI strategic planning, calendar management, introspective reflection and performance analytics into one polished dashboard.
 
 ## 🚀 What GoalGrid Can Do
 
