@@ -811,6 +811,7 @@ export default function TaskPlannerDashboard() {
     setInputValue('');
     setSelectedGoal(newGoal.id);
     setGoalError('');
+    setActiveTab('planner');
     inputRef.current?.focus();
   };
 

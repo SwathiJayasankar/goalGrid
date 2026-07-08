@@ -8,7 +8,7 @@ GoalGrid is a high-performance, AI-augmented human optimization workspace built 
 
 * **🤖 AI-Driven Roadmap Engine**: Feed in abstract, long-term goals and receive step-by-step, milestone-based weekly execution plans built via the Llama-3-70b model.
 * **📅 Context-Aware Scheduler**: Define your fixed daily routine (sleep, workouts, meals), and the AI scheduler dynamically schedules tasks around your busy blocks.
-* **🧠 Cognitive Reflection Space**: Evening journal assistant featuring EQ, Stoic, and ROSE coaching lenses. It analyzes entries to generate mental clarity insights.
+* **🧠 Cognitive Reflection Space**: Evening journal assistant featuring EQ, Stoic, and ROSE coaching lenses. It analyzes entries and tasks history to generate mental clarity insights.
 * **📊 Well-Being Analytics**: Automated metrics dashboard mapping energy levels, common blocker correlations, and productivity trends over rolling 7-day windows.
 * **🔒 Seamless Sync & Auth**: State persistence utilizing JWT-based auth and debounced autosaving to database clusters.
 
@@ -46,9 +46,6 @@ flowchart TD
         Groq[Groq Llama-3 LLM]
     end
 
-    State <==>|HTTPS / JWT| API
-    Sync <--> DB
-    AI <--> Groq
 ```
 
 ---
@@ -90,9 +87,8 @@ Ensure you have [Node.js](https://nodejs.org/) and [MongoDB](https://www.mongodb
    ```bash
    npm start
    ```
-
 ---
 
-## 🌐 Deployment
 
-For step-by-step guides on deploying the React frontend on **Vercel** and the backend on **Render**, refer to the [Deployment Guide (DEPLOY.md)](file:///c:/Users/jayas/Desktop/Projects/productive/DEPLOY.md).
+
+
