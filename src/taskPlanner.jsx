@@ -16,6 +16,34 @@ import JournalTab from './components/JournalTab';
 // Shared Utilities
 import { categories, formatDate } from './utils/plannerHelpers';
 
+// Base API URL
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+const parseTaskTimeToDate = (time, date = new Date()) => {
+  if (!time) return null;
+  const normalized = time.trim();
+  const ampmMatch = normalized.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  let hours;
+  let minutes;
+
+  if (ampmMatch) {
+    hours = parseInt(ampmMatch[1], 10);
+    minutes = parseInt(ampmMatch[2], 10);
+    const ampm = ampmMatch[3].toUpperCase();
+    if (ampm === 'PM' && hours !== 12) hours += 12;
+    if (ampm === 'AM' && hours === 12) hours = 0;
+  } else {
+    const parts = normalized.split(':');
+    if (parts.length !== 2) return null;
+    hours = parseInt(parts[0], 10);
+    minutes = parseInt(parts[1], 10);
+  }
+
+  const result = new Date(date);
+  result.setHours(hours, minutes, 0, 0);
+  return result;
+};
+
 export default function TaskPlannerDashboard() {
   const [goals, setGoals] = useState([]);
   const [inputValue, setInputValue] = useState('');
@@ -82,9 +110,6 @@ export default function TaskPlannerDashboard() {
     { id: 6, text: 'Wind down', time: '10:00 PM', category: 'health' }
   ]);
   const [showRoutineEditor, setShowRoutineEditor] = useState(false);
-
-  // Base API URL
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
   // Logout function
   const handleLogout = () => {
@@ -245,10 +270,10 @@ export default function TaskPlannerDashboard() {
   }, [goals, fixedRoutine, calendarTasks, calendarNotes, completedRoadmapTasks, addedAiTasks, journalEntries, journalReflections, journalMoods, token, isInitialLoad, saveUserData]);
 
   // Get all tasks for a specific date
-  const getTasksForDate = (date) => {
+  const getTasksForDate = useCallback((date) => {
     const dateKey = formatDate(date);
     return calendarTasks[dateKey] || [];
-  };
+  }, [calendarTasks]);
 
   const requestNotificationPermission = useCallback(() => {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
@@ -259,32 +284,7 @@ export default function TaskPlannerDashboard() {
     }
   }, []);
 
-  const parseTaskTimeToDate = (time, date = new Date()) => {
-    if (!time) return null;
-    const normalized = time.trim();
-    const ampmMatch = normalized.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-    let hours;
-    let minutes;
-
-    if (ampmMatch) {
-      hours = parseInt(ampmMatch[1], 10);
-      minutes = parseInt(ampmMatch[2], 10);
-      const ampm = ampmMatch[3].toUpperCase();
-      if (ampm === 'PM' && hours !== 12) hours += 12;
-      if (ampm === 'AM' && hours === 12) hours = 0;
-    } else {
-      const parts = normalized.split(':');
-      if (parts.length !== 2) return null;
-      hours = parseInt(parts[0], 10);
-      minutes = parseInt(parts[1], 10);
-    }
-
-    const result = new Date(date);
-    result.setHours(hours, minutes, 0, 0);
-    return result;
-  };
-
-  const sendBrowserNotification = (title, message) => {
+  const sendBrowserNotification = useCallback((title, message) => {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
     if (notificationPermission !== 'granted') return;
     try {
@@ -292,9 +292,9 @@ export default function TaskPlannerDashboard() {
     } catch (err) {
       console.error('Notification failed:', err);
     }
-  };
+  }, [notificationPermission]);
 
-  const getReminderNotifications = () => {
+  const getReminderNotifications = useCallback(() => {
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -334,7 +334,7 @@ export default function TaskPlannerDashboard() {
     });
 
     return reminders;
-  };
+  }, [calendarTasks, getTasksForDate]);
 
   const lastNotificationRef = useRef('');
   useEffect(() => {
@@ -351,7 +351,7 @@ export default function TaskPlannerDashboard() {
         lastNotificationRef.current = topMessage;
       }
     }
-  }, [calendarTasks, notificationPermission]);
+  }, [getReminderNotifications, notificationPermission, sendBrowserNotification]);
 
   // Add or Update comprehensive task
   const addDetailedTask = () => {
