@@ -280,7 +280,7 @@ export default function JournalTab({
           </div>
 
           {!isTrendsLoading && trendData ? (
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' }}>
+            <div className="trends-grid">
               {/* Energy Levels Chart */}
               <div style={{ padding: '20px', background: 'rgba(0,0,0,0.2)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <h4 style={{ margin: '0 0 20px 0', color: '#cbd5e1', fontSize: '0.9rem' }}>Weekly Energy Levels</h4>
@@ -339,7 +339,7 @@ export default function JournalTab({
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '32px' }}>
+      <div className="journal-workspace-grid">
         {/* Editor Section */}
         <div className="glass-panel" style={{ padding: '24px', borderRadius: '24px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

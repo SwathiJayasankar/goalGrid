@@ -13,21 +13,22 @@ const PORT = process.env.PORT || 5000;
 const rawFrontendUrl = process.env.FRONTEND_URL;
 const cleanedFrontendUrl = rawFrontendUrl ? rawFrontendUrl.replace(/\/$/, '') : null;
 
-const allowedOrigins = [
-  'http://localhost:3000',
-  cleanedFrontendUrl
-].filter(Boolean);
-
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, curl, or same-origin)
     if (!origin) return callback(null, true);
-    if (!allowedOrigins.includes(origin)) {
-      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-      console.warn(`CORS blocked request from origin: ${origin}. Allowed origins:`, allowedOrigins);
-      return callback(new Error(msg), false);
+    
+    const isLocalhost = origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:');
+    const isVercel = origin.endsWith('.vercel.app');
+    const isAllowedFrontend = cleanedFrontendUrl && origin === cleanedFrontendUrl;
+    
+    if (isLocalhost || isVercel || isAllowedFrontend) {
+      return callback(null, true);
     }
-    return callback(null, true);
+    
+    const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+    console.warn(`CORS blocked request from origin: ${origin}. Configured frontend: ${cleanedFrontendUrl}`);
+    return callback(new Error(msg), false);
   },
   credentials: true
 }));

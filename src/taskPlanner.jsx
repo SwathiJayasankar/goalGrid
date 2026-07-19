@@ -1513,6 +1513,30 @@ export default function TaskPlannerDashboard() {
           }
         }
 
+        .calendar-details-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 30px;
+        }
+
+        .trends-grid {
+          display: grid;
+          grid-template-columns: 1.5fr 1fr;
+          gap: 24px;
+        }
+
+        .journal-workspace-grid {
+          display: grid;
+          grid-template-columns: 1.2fr 1fr;
+          gap: 32px;
+        }
+
+        .analytics-media-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+          gap: 20px;
+        }
+
         @media (max-width: 1200px) {
           .content {
             grid-template-columns: 1fr;
@@ -1524,6 +1548,128 @@ export default function TaskPlannerDashboard() {
 
           .days-grid {
             grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 1024px) {
+          .journal-workspace-grid {
+            grid-template-columns: 1fr;
+            gap: 24px;
+          }
+          .trends-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .container {
+            padding: 20px 12px;
+          }
+
+          .header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 20px;
+            margin-bottom: 24px;
+            text-align: center;
+          }
+
+          .header-left h1 {
+            font-size: 2.2rem !important;
+            letter-spacing: -1px;
+            text-align: center;
+          }
+
+          .header-left p {
+            text-align: center;
+          }
+
+          .header-right {
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+
+          .tab-navigation {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            width: 100% !important;
+            gap: 10px !important;
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+          }
+
+          .tab-navigation .glass-panel {
+            overflow-x: auto;
+            white-space: nowrap;
+            display: flex;
+            gap: 6px;
+            padding: 8px;
+            border-radius: 12px;
+            width: 100%;
+            -webkit-overflow-scrolling: touch;
+          }
+
+          .tab-navigation .glass-panel::-webkit-scrollbar {
+            display: none;
+          }
+
+          .tab-button {
+            padding: 8px 14px;
+            font-size: 0.82rem;
+            flex-shrink: 0;
+          }
+
+          .main-content {
+            padding: 20px 16px;
+            border-radius: 16px;
+          }
+
+          .sidebar-section {
+            padding: 16px;
+            border-radius: 16px;
+          }
+
+          .calendar-details-grid {
+            grid-template-columns: 1fr;
+            gap: 24px;
+          }
+
+          .analytics-media-grid {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          }
+
+          .calendar-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+            text-align: center;
+          }
+
+          .calendar-nav {
+            justify-content: center;
+            flex-wrap: wrap;
+            border-radius: 20px !important;
+            padding: 8px !important;
+            gap: 8px !important;
+          }
+
+          .calendar-month {
+            min-width: 140px !important;
+            padding: 6px 10px !important;
+          }
+
+          .today-button {
+            padding: 8px 14px !important;
+            font-size: 0.85rem !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .auth-modal-box {
+            padding: 24px !important;
           }
         }
       `}</style>

@@ -160,7 +160,7 @@ export default function CalendarTab({
             </div>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+          <div className="calendar-details-grid">
             <div className="calendar-form-section">
               <div style={{ color: '#93c5fd', fontSize: '0.85rem', fontWeight: '700', marginBottom: '16px', textTransform: 'uppercase' }}>Add Event/Task</div>
               <div className="task-input-group" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

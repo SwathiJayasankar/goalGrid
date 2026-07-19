@@ -402,7 +402,7 @@ export default function AnalyticsTab({ goals, calendarTasks, completedRoadmapTas
       </div>
 
       {/* Main Charts & Visualizations Container */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px' }}>
+      <div className="analytics-media-grid">
         
         {/* Streak History Sparkline Graph */}
         <div className="card glass-card" style={{ padding: '24px', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
