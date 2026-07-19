@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
 const plannerRoutes = require('./routes/planner');
+const assistantRoutes = require('./routes/assistant');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -43,6 +44,7 @@ mongoose.connect(mongoURI)
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/planner', plannerRoutes);
+app.use('/api/assistant', assistantRoutes);
 
 // Root path diagnostic
 app.get('/', (req, res) => {

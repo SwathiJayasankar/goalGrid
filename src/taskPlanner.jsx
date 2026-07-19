@@ -5,6 +5,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import AuthModal from './components/AuthModal';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import SidebarMenu from './components/SidebarMenu';
 import DailyTab from './components/DailyTab';
 import WeeklyTab from './components/WeeklyTab';
 import CalendarTab from './components/CalendarTab';
@@ -12,6 +13,7 @@ import PlannerTab from './components/PlannerTab';
 import WeeklyScheduleTab from './components/WeeklyScheduleTab';
 import AnalyticsTab from './components/AnalyticsTab';
 import JournalTab from './components/JournalTab';
+import AiAssistantSidebar from './components/AiAssistantSidebar';
 
 // Shared Utilities
 import { categories, formatDate } from './utils/plannerHelpers';
@@ -85,6 +87,9 @@ export default function TaskPlannerDashboard() {
   const [editingTask, setEditingTask] = useState(null);
   const [editingTaskDateKey, setEditingTaskDateKey] = useState(null);
   const [reminderNotifications, setReminderNotifications] = useState([]);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       return Notification.permission;
@@ -823,7 +828,7 @@ export default function TaskPlannerDashboard() {
   };
 
   return (
-    <div style={{ background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f4b 100%)', minHeight: '100vh' }}>
+    <div className="app-layout-wrapper">
       <style>{`
         * {
           margin: 0;
@@ -832,6 +837,457 @@ export default function TaskPlannerDashboard() {
         }
 
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        /* Layout Grid and Wrapper */
+        .app-layout-wrapper {
+          display: flex;
+          min-height: 100vh;
+          background: #0a0c10;
+          background: linear-gradient(135deg, #0a0e27 0%, #1a1f4b 100%);
+          color: #f8fafc;
+          width: 100%;
+        }
+
+        .app-workspace-area {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          padding: 24px 32px 32px 32px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Sidebar Container */
+        .sidebar-container {
+          width: 260px;
+          background: rgba(10, 14, 39, 0.4);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border-right: 1px solid rgba(255, 255, 255, 0.08);
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-container.collapsed {
+          width: 70px;
+        }
+
+        /* Sidebar Header & Brand */
+        .sidebar-brand-wrapper {
+          padding: 24px 20px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          height: 80px;
+        }
+
+        .brand-logo-area {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .brand-logo-square {
+          font-size: 1.4rem;
+        }
+
+        .brand-text-nodes {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .brand-name {
+          font-size: 1.15rem;
+          font-weight: 800;
+          letter-spacing: -0.5px;
+          background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        .brand-slogan {
+          font-size: 0.7rem;
+          color: #64748b;
+          font-weight: 500;
+        }
+
+        .brand-compact-logo {
+          font-size: 1.5rem;
+          margin: 0 auto;
+        }
+
+        .sidebar-mobile-close {
+          display: none;
+          background: none;
+          border: none;
+          color: #94a3b8;
+          cursor: pointer;
+        }
+
+        /* Sidebar Toggle Button */
+        .sidebar-toggle-btn {
+          position: absolute;
+          right: -12px;
+          top: 28px;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: #1e1b4b;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          color: #a78bfa;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          z-index: 10;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+          transition: all 0.2s ease;
+        }
+
+        .sidebar-toggle-btn:hover {
+          background: #312e81;
+          color: white;
+          transform: scale(1.1);
+        }
+
+        /* Navigation Links List */
+        .sidebar-nav-scroll {
+          flex: 1;
+          overflow-y: auto;
+          padding: 20px 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        .sidebar-nav-scroll::-webkit-scrollbar {
+          width: 4px;
+        }
+
+        .navigation-group {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .group-label {
+          font-size: 0.68rem;
+          font-weight: 700;
+          color: #49546e;
+          letter-spacing: 1px;
+          padding-left: 14px;
+          margin-bottom: 6px;
+          text-transform: uppercase;
+        }
+
+        .group-label.ai-label {
+          color: #a78bfa;
+        }
+
+        .sidebar-menu-btn {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 10px 14px;
+          border-radius: 10px;
+          background: transparent;
+          border: none;
+          color: #94a3b8;
+          cursor: pointer;
+          text-align: left;
+          font-size: 0.88rem;
+          font-weight: 500;
+          position: relative;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          width: 100%;
+        }
+
+        .sidebar-container.collapsed .sidebar-menu-btn {
+          justify-content: center;
+          padding: 10px;
+        }
+
+        .sidebar-menu-btn:hover {
+          background: rgba(255, 255, 255, 0.04);
+          color: #f8fafc;
+        }
+
+        .sidebar-menu-btn.active {
+          background: rgba(124, 58, 237, 0.15);
+          border: 1px solid rgba(124, 58, 237, 0.25);
+          color: #c084fc;
+        }
+
+        .sidebar-menu-btn.ai-btn.active {
+          background: rgba(236, 72, 153, 0.1);
+          border: 1px solid rgba(236, 72, 153, 0.25);
+          color: #f472b6;
+        }
+
+        .btn-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .btn-label {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .active-indicator {
+          position: absolute;
+          right: 12px;
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+          background: currentColor;
+          box-shadow: 0 0 8px currentColor;
+        }
+
+        .sidebar-group-divider {
+          height: 1px;
+          background: rgba(255, 255, 255, 0.05);
+          margin: 10px 14px;
+        }
+
+        /* Sidebar Footer / Profile Section */
+        .sidebar-footer {
+          padding: 16px;
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          background: rgba(0, 0, 0, 0.15);
+        }
+
+        .sidebar-sync-badge {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.8rem;
+          color: #94a3b8;
+          padding: 6px 10px;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.02);
+        }
+
+        .sidebar-sync-badge.compact {
+          justify-content: center;
+          padding: 6px;
+        }
+
+        .text-emerald {
+          color: #10b981;
+          filter: drop-shadow(0 0 3px rgba(16, 185, 129, 0.4));
+        }
+
+        .text-error {
+          color: #f87171;
+          filter: drop-shadow(0 0 3px rgba(248, 113, 113, 0.4));
+        }
+
+        .sidebar-profile-box {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 6px;
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-profile-box.compact {
+          flex-direction: column;
+          gap: 8px;
+          padding: 8px 4px;
+        }
+
+        .avatar-square {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          flex-shrink: 0;
+        }
+
+        .profile-details {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-width: 0;
+        }
+
+        .profile-email {
+          font-size: 0.8rem;
+          color: #cbd5e1;
+          font-weight: 500;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .profile-role {
+          font-size: 0.65rem;
+          color: #a78bfa;
+        }
+
+        .btn-logout {
+          background: transparent;
+          border: none;
+          color: #94a3b8;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 6px;
+          border-radius: 6px;
+          transition: all 0.2s ease;
+        }
+
+        .btn-logout:hover {
+          color: #f87171;
+          background: rgba(239, 68, 68, 0.1);
+        }
+
+        .auth-fallback-box {
+          width: 100%;
+        }
+
+        .sidebar-signin-btn {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 10px;
+          border-radius: 8px;
+          background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%);
+          border: none;
+          color: white;
+          font-size: 0.85rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .sidebar-signin-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(124,58,237,0.3);
+        }
+
+        /* Top Navbar Header */
+        .top-navbar-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          height: 64px;
+          border-radius: 16px;
+          padding: 0 24px;
+          margin-bottom: 24px;
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .navbar-left {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .navbar-mobile-toggle {
+          display: none;
+          background: transparent;
+          border: none;
+          color: #94a3b8;
+          cursor: pointer;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .navbar-breadcrumb {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.9rem;
+        }
+
+        .breadcrumb-group {
+          color: #64748b;
+          font-weight: 500;
+        }
+
+        .breadcrumb-separator {
+          color: rgba(255,255,255,0.15);
+        }
+
+        .breadcrumb-current {
+          color: #f8fafc;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+        }
+
+        .navbar-right {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .navbar-sync-icon {
+          display: flex;
+          align-items: center;
+        }
+
+        .navbar-signin-btn {
+          display: none;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 6px;
+          padding: 6px 12px;
+          font-size: 0.82rem;
+          font-weight: 500;
+          color: #cbd5e1;
+          cursor: pointer;
+        }
+
+        .navbar-user-indicator {
+          display: none;
+          align-items: center;
+          gap: 6px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.06);
+          padding: 4px 10px;
+          border-radius: 14px;
+          font-size: 0.8rem;
+          color: #cbd5e1;
+        }
+
+        /* Mobile Responsive Drawer Overlay Styles */
+        .sidebar-backdrop {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(0,0,0,0.5);
+          backdrop-filter: blur(4px);
+          z-index: 1000;
+          animation: fadeIn 0.25s ease-out;
+        }
 
         .container {
           max-width: 1600px;
@@ -1672,18 +2128,44 @@ export default function TaskPlannerDashboard() {
             padding: 24px !important;
           }
         }
+
+        @media (min-width: 1200px) {
+          .app-workspace-area {
+            transition: padding-right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          }
+          .app-workspace-area.copilot-active {
+            padding-right: 380px;
+          }
+        }
       `}</style>
 
-      <div className="container">
+      <SidebarMenu
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
+        isMobileOpen={isMobileSidebarOpen}
+        setIsMobileOpen={setIsMobileSidebarOpen}
+        token={token}
+        userEmail={userEmail}
+        handleLogout={handleLogout}
+        setShowAuthModal={setShowAuthModal}
+        setAuthMode={setAuthMode}
+        syncStatus={syncStatus}
+      />
+
+      <div className={`app-workspace-area ${isAiAssistantOpen ? 'copilot-active' : ''}`}>
         <Header 
           token={token}
           syncStatus={syncStatus}
           userEmail={userEmail}
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
           handleLogout={handleLogout}
           setShowAuthModal={setShowAuthModal}
           setAuthMode={setAuthMode}
+          onMobileMenuOpen={() => setIsMobileSidebarOpen(true)}
+          isAiOpen={isAiAssistantOpen}
+          onAiToggle={() => setIsAiAssistantOpen(!isAiAssistantOpen)}
         />
 
         <div className="content">
@@ -1912,6 +2394,14 @@ export default function TaskPlannerDashboard() {
         setAuthError={setAuthError}
         authLoading={authLoading}
         handleAuthSubmit={handleAuthSubmit}
+      />
+
+      <AiAssistantSidebar
+        isOpen={isAiAssistantOpen}
+        onClose={() => setIsAiAssistantOpen(false)}
+        token={token}
+        API_URL={API_URL}
+        onMutation={() => fetchUserData(token)}
       />
     </div>
   </div>
