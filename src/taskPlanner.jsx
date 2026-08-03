@@ -827,6 +827,8 @@ export default function TaskPlannerDashboard() {
     }
   };
 
+  const showGoalsSidebar = activeTab === 'planner' || activeTab === 'weekly';
+
   return (
     <div className="app-layout-wrapper">
       <style>{`
@@ -1368,9 +1370,13 @@ export default function TaskPlannerDashboard() {
 
         .content {
           display: grid;
-          grid-template-columns: 1fr 320px;
+          grid-template-columns: 1fr;
           gap: 40px;
           animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+
+        .content.has-sidebar {
+          grid-template-columns: 1fr 320px;
         }
 
         .main-content {
@@ -1994,7 +2000,7 @@ export default function TaskPlannerDashboard() {
         }
 
         @media (max-width: 1200px) {
-          .content {
+          .content, .content.has-sidebar {
             grid-template-columns: 1fr;
           }
 
@@ -2168,7 +2174,7 @@ export default function TaskPlannerDashboard() {
           onAiToggle={() => setIsAiAssistantOpen(!isAiAssistantOpen)}
         />
 
-        <div className="content">
+        <div className={`content ${showGoalsSidebar ? 'has-sidebar' : ''}`}>
           <div className="main-content">
             
             {showTaskForm && (
@@ -2366,20 +2372,22 @@ export default function TaskPlannerDashboard() {
 
           </div>
 
-          <Sidebar 
-            goals={goals}
-            selectedGoal={selectedGoal}
-            setSelectedGoal={setSelectedGoal}
-            inputValue={inputValue}
-            setInputValue={setInputValue}
-            inputRef={inputRef}
-            addGoal={addGoal}
-            deleteGoal={deleteGoal}
-            setActiveTab={setActiveTab}
-            handleKeyPress={handleKeyPress}
-            goalError={goalError}
-            setGoalError={setGoalError}
-          />
+          {showGoalsSidebar && (
+            <Sidebar 
+              goals={goals}
+              selectedGoal={selectedGoal}
+              setSelectedGoal={setSelectedGoal}
+              inputValue={inputValue}
+              setInputValue={setInputValue}
+              inputRef={inputRef}
+              addGoal={addGoal}
+              deleteGoal={deleteGoal}
+              setActiveTab={setActiveTab}
+              handleKeyPress={handleKeyPress}
+              goalError={goalError}
+              setGoalError={setGoalError}
+            />
+          )}
         </div>
 
       <AuthModal 
