@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Cloud, Loader, AlertCircle, User, LogOut, Sparkles } from 'lucide-react';
+import { Menu, Cloud, Loader, AlertCircle, User, Sparkles } from 'lucide-react';
 
 export default function Header({
   token,
