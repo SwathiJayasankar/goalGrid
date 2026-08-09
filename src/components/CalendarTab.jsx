@@ -86,6 +86,17 @@ export default function CalendarTab({
                       </div>
                     )}
                   </div>
+                  <div className="calendar-day-dots-mobile">
+                    {tasks.filter(t => (!t.recurrence || t.recurrence === 'once' || t.isDeadlineEntry) && !String(t.id).startsWith('ai-')).slice(0, 4).map((t, i) => (
+                      <span 
+                        key={i} 
+                        className="calendar-day-dot"
+                        style={{ 
+                          backgroundColor: t.isDeadlineEntry ? '#ef4444' : (categories[t.category || 'casual']?.color || '#a855f7')
+                        }}
+                      />
+                    ))}
+                  </div>
                   <div className="calendar-day-indicators" style={{ marginTop: '4px' }}>
                     {calendarNotes[formatDate(date)] && (
                       <span style={{ fontSize: '0.7rem' }}>📝</span>

@@ -55,6 +55,10 @@ const UserSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: {}
   },
+  files: {
+    type: mongoose.Schema.Types.Mixed,
+    default: []
+  },
   createdAt: {
     type: Date,
     default: Date.now

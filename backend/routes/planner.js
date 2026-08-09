@@ -22,7 +22,8 @@ router.get('/sync', auth, async (req, res) => {
       addedAiTasks: user.addedAiTasks || {},
       journalEntries: user.journalEntries || {},
       journalReflections: user.journalReflections || {},
-      journalMoods: user.journalMoods || {}
+      journalMoods: user.journalMoods || {},
+      files: user.files || []
     });
   } catch (err) {
     console.error('Fetch sync error:', err);
@@ -108,7 +109,7 @@ router.post('/trends', auth, async (req, res) => {
 // @desc    Persist/save user's full task planner data
 // @access  Private
 router.post('/sync', auth, async (req, res) => {
-  const { goals, fixedRoutine, calendarTasks, calendarNotes, completedRoadmapTasks, addedAiTasks, journalEntries, journalReflections, journalMoods } = req.body;
+  const { goals, fixedRoutine, calendarTasks, calendarNotes, completedRoadmapTasks, addedAiTasks, journalEntries, journalReflections, journalMoods, files } = req.body;
 
   try {
     const user = await User.findById(req.user.id);
@@ -126,6 +127,7 @@ router.post('/sync', auth, async (req, res) => {
     if (journalEntries !== undefined) user.journalEntries = journalEntries;
     if (journalReflections !== undefined) user.journalReflections = journalReflections;
     if (journalMoods !== undefined) user.journalMoods = journalMoods;
+    if (files !== undefined) user.files = files;
 
     await user.save();
 

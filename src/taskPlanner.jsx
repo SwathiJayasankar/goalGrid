@@ -13,6 +13,7 @@ import PlannerTab from './components/PlannerTab';
 import WeeklyScheduleTab from './components/WeeklyScheduleTab';
 import AnalyticsTab from './components/AnalyticsTab';
 import JournalTab from './components/JournalTab';
+import FileManagementTab from './components/FileManagementTab';
 import AiAssistantSidebar from './components/AiAssistantSidebar';
 
 // Shared Utilities
@@ -48,6 +49,7 @@ const parseTaskTimeToDate = (time, date = new Date()) => {
 
 export default function TaskPlannerDashboard() {
   const [goals, setGoals] = useState([]);
+  const [files, setFiles] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [loadingPlan, setLoadingPlan] = useState(null);
@@ -203,6 +205,7 @@ export default function TaskPlannerDashboard() {
         setJournalEntries(data.journalEntries || {});
         setJournalReflections(data.journalReflections || {});
         setJournalMoods(data.journalMoods || {});
+        setFiles(data.files || []);
         setSyncStatus('synced');
       } else {
         console.error('Failed to fetch user data:', data.message);
@@ -267,12 +270,13 @@ export default function TaskPlannerDashboard() {
         addedAiTasks,
         journalEntries,
         journalReflections,
-        journalMoods
+        journalMoods,
+        files
       });
     }, 1500);
 
     return () => clearTimeout(delayDebounce);
-  }, [goals, fixedRoutine, calendarTasks, calendarNotes, completedRoadmapTasks, addedAiTasks, journalEntries, journalReflections, journalMoods, token, isInitialLoad, saveUserData]);
+  }, [goals, fixedRoutine, calendarTasks, calendarNotes, completedRoadmapTasks, addedAiTasks, journalEntries, journalReflections, journalMoods, files, token, isInitialLoad, saveUserData]);
 
   // Get all tasks for a specific date
   const getTasksForDate = useCallback((date) => {
@@ -1790,6 +1794,10 @@ export default function TaskPlannerDashboard() {
           font-size: 0.95rem;
         }
 
+        .calendar-day-dots-mobile {
+          display: none;
+        }
+
         .selected-date-tasks {
           margin-top: 40px;
           background: rgba(255, 255, 255, 0.02);
@@ -2022,6 +2030,51 @@ export default function TaskPlannerDashboard() {
             grid-template-columns: 1fr;
             gap: 20px;
           }
+
+          /* Mobile Sidebar Drawer Navigation Rules */
+          .sidebar-container {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px !important;
+            transform: translateX(-100%);
+            z-index: 1100;
+            background: #0f172a !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          }
+
+          .sidebar-container.mobile-open {
+            transform: translateX(0) !important;
+          }
+
+          .sidebar-toggle-btn {
+            display: none !important;
+          }
+
+          .sidebar-mobile-close {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .app-workspace-area {
+            padding: 16px 16px 24px 16px !important;
+          }
+
+          .navbar-mobile-toggle {
+            display: flex !important;
+          }
+
+          .navbar-user-indicator {
+            display: flex !important;
+          }
+
+          .navbar-signin-btn {
+            display: block !important;
+          }
         }
 
         @media (max-width: 768px) {
@@ -2126,6 +2179,34 @@ export default function TaskPlannerDashboard() {
           .today-button {
             padding: 8px 14px !important;
             font-size: 0.85rem !important;
+          }
+
+          /* Calendar Mobile Indicators Override */
+          .calendar-day-tasks-mini {
+            display: none !important;
+          }
+
+          .calendar-day-dots-mobile {
+            display: flex !important;
+            flex-wrap: wrap;
+            gap: 3px;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin-top: 4px;
+          }
+
+          .calendar-day-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+          }
+
+          .calendar-day {
+            aspect-ratio: 1 !important;
+            padding: 4px !important;
+            min-height: 55px !important;
           }
         }
 
@@ -2288,6 +2369,8 @@ export default function TaskPlannerDashboard() {
                 setTaskForm={setTaskForm}
                 taskForm={taskForm}
                 setShowTaskForm={setShowTaskForm}
+                calendarNotes={calendarNotes}
+                setCalendarNotes={setCalendarNotes}
               />
             )}
 
@@ -2367,6 +2450,13 @@ export default function TaskPlannerDashboard() {
                 fixedRoutine={fixedRoutine}
                 API_URL={API_URL}
                 formatDate={formatDate}
+              />
+            )}
+
+            {activeTab === 'files' && (
+              <FileManagementTab 
+                files={files}
+                setFiles={setFiles}
               />
             )}
 

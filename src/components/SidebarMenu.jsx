@@ -14,7 +14,8 @@ import {
   Cloud, 
   Loader, 
   AlertCircle,
-  X
+  X,
+  FolderOpen
 } from 'lucide-react';
 
 export default function SidebarMenu({
@@ -37,6 +38,7 @@ export default function SidebarMenu({
     { id: 'calendar', label: 'Calendar Grid', icon: <Calendar size={18} />, section: 'standard' },
     { id: 'analytics', label: 'Analytics Panel', icon: <BarChart2 size={18} />, section: 'standard' },
     { id: 'journal', label: 'Reflection Journal', icon: <BookOpen size={18} />, section: 'standard' },
+    { id: 'files', label: 'File Locker', icon: <FolderOpen size={18} />, section: 'standard' },
     { id: 'planner', label: 'AI Roadmap', icon: <TrendingUp size={18} />, section: 'ai', isAi: true },
     { id: 'weekly', label: 'AI Calendar Schedule', icon: <Sparkles size={18} />, section: 'ai', isAi: true }
   ];

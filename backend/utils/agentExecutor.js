@@ -188,6 +188,28 @@ const agentTools = [
         required: ["dateKey", "entryText"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_user_files",
+      description: "Lists all files, PDFs, images, and notes stored in the user's workspace.",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "read_user_file",
+      description: "Reads the content, note body, or text description of a specific file by its file ID.",
+      parameters: {
+        type: "object",
+        properties: {
+          fileId: { type: "string", description: "The unique ID of the file or note." }
+        },
+        required: ["fileId"]
+      }
+    }
   }
 ];
 
@@ -409,6 +431,34 @@ CORE ACTIONS POLICY:
               user.markModified('journalEntries');
               user.markModified('journalMoods');
               toolOutput = '✓ Journal entry and mood rating recorded';
+              break;
+
+            case 'list_user_files':
+              stepText = 'Listing files, PDFs, and notes in the workspace...';
+              toolOutput = JSON.stringify((user.files || []).map(f => ({
+                id: f.id,
+                name: f.name,
+                type: f.type,
+                size: f.size,
+                createdAt: f.createdAt,
+                description: f.description || ''
+              })));
+              break;
+
+            case 'read_user_file':
+              stepText = `Reading file content for ID: ${toolArgs.fileId}`;
+              const foundFile = (user.files || []).find(f => f.id === toolArgs.fileId);
+              if (foundFile) {
+                toolOutput = JSON.stringify({
+                  id: foundFile.id,
+                  name: foundFile.name,
+                  type: foundFile.type,
+                  content: foundFile.type === 'note' ? foundFile.content : `[File: ${foundFile.name}, Type: ${foundFile.type}, Description: ${foundFile.description || 'none'}, Size: ${foundFile.size || 0} bytes]`,
+                  extractedText: foundFile.extractedText || foundFile.content || ''
+                });
+              } else {
+                toolOutput = 'Warning: File not found with the specified ID.';
+              }
               break;
 
             default:
