@@ -91,8 +91,14 @@ const agentTools = [
     type: "function",
     function: {
       name: "get_user_data",
-      description: "Retrieves details of the user's workspace profile including active goals, daily routine slots, scheduled tasks, and journals.",
-      parameters: { type: "object", properties: {} }
+      description: "Retrieves details of the user's workspace profile including active goals, daily routine slots, scheduled tasks, and journals. You can filter database tasks and journals by date range.",
+      parameters: {
+        type: "object",
+        properties: {
+          startDate: { type: "string", description: "Optional start date in YYYY-MM-DD format" },
+          endDate: { type: "string", description: "Optional end date in YYYY-MM-DD format" }
+        }
+      }
     }
   },
   {
@@ -253,12 +259,17 @@ CORE ACTIONS POLICY:
   // 3. Assemble message arrays
   const messages = [
     { role: 'system', content: systemPrompt },
-    ...chatHistory.slice(-15).map(m => ({
-      role: m.role === 'user' ? 'user' : 'assistant',
-      content: m.content,
-      // If there were tool calls, we preserve them
-      ...(m.tool_calls ? { tool_calls: m.tool_calls } : {})
-    })),
+    ...chatHistory.slice(-4).map(m => {
+      let content = m.content || '';
+      if (content.length > 1000) {
+        content = content.substring(0, 1000) + '... (truncated)';
+      }
+      return {
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: content,
+        ...(m.tool_calls ? { tool_calls: m.tool_calls } : {})
+      };
+    }),
     { role: 'user', content: userMessage }
   ];
 
@@ -280,7 +291,7 @@ CORE ACTIONS POLICY:
       },
       body: JSON.stringify({
         model: model,
-        max_tokens: 1500,
+        max_tokens: 800,
         temperature: 0.4,
         messages: messages,
         tools: agentTools,
@@ -319,12 +330,56 @@ CORE ACTIONS POLICY:
               break;
 
             case 'get_user_data':
-              stepText = 'Retrieving full user workspace details...';
+              stepText = 'Retrieving user workspace details (optimized date window)...';
+              
+              // Define default or requested date window (+/- 14 days by default to save tokens)
+              let startMs = null;
+              let endMs = null;
+              
+              if (toolArgs.startDate && toolArgs.endDate) {
+                stepText = `Retrieving user workspace details between ${toolArgs.startDate} and ${toolArgs.endDate}...`;
+                startMs = new Date(toolArgs.startDate).getTime();
+                endMs = new Date(toolArgs.endDate).getTime();
+              } else {
+                // Default: +/- 14 days around the current date key
+                const current = new Date(currentDateKey);
+                startMs = new Date(current.getTime() - 14 * 24 * 60 * 60 * 1000).getTime();
+                endMs = new Date(current.getTime() + 14 * 24 * 60 * 60 * 1000).getTime();
+              }
+
+              const filteredTasks = {};
+              if (user.calendarTasks) {
+                for (const dateKey of Object.keys(user.calendarTasks)) {
+                  const taskTime = new Date(dateKey).getTime();
+                  if (!isNaN(taskTime) && taskTime >= startMs && taskTime <= endMs) {
+                    filteredTasks[dateKey] = user.calendarTasks[dateKey];
+                  }
+                }
+              }
+
+              const filteredJournals = {};
+              if (user.journalEntries) {
+                const entriesList = [];
+                for (const dateKey of Object.keys(user.journalEntries)) {
+                  const timeMs = new Date(dateKey).getTime();
+                  if (!isNaN(timeMs) && timeMs >= startMs && timeMs <= endMs) {
+                    entriesList.push({ dateKey, timeMs, content: user.journalEntries[dateKey] });
+                  }
+                }
+                // Sort descending so the most recent reflections come first
+                entriesList.sort((a, b) => b.timeMs - a.timeMs);
+                // Cap default retrieval to most recent 7 journals to prevent token overflow
+                const limit = toolArgs.startDate && toolArgs.endDate ? entriesList.length : 7;
+                for (let i = 0; i < Math.min(entriesList.length, limit); i++) {
+                  filteredJournals[entriesList[i].dateKey] = entriesList[i].content;
+                }
+              }
+
               toolOutput = JSON.stringify({
                 goals: user.goals || [],
                 fixedRoutine: user.fixedRoutine || [],
-                calendarTasks: user.calendarTasks || {},
-                journalEntries: user.journalEntries || {},
+                calendarTasks: filteredTasks,
+                journalEntries: filteredJournals,
                 journalMoods: user.journalMoods || {}
               });
               break;
@@ -449,12 +504,16 @@ CORE ACTIONS POLICY:
               stepText = `Reading file content for ID: ${toolArgs.fileId}`;
               const foundFile = (user.files || []).find(f => f.id === toolArgs.fileId);
               if (foundFile) {
+                let fileText = foundFile.extractedText || foundFile.content || '';
+                if (fileText.length > 5000) {
+                  fileText = fileText.substring(0, 5000) + '\n... [Remaining content truncated due to token limit constraints]';
+                }
                 toolOutput = JSON.stringify({
                   id: foundFile.id,
                   name: foundFile.name,
                   type: foundFile.type,
-                  content: foundFile.type === 'note' ? foundFile.content : `[File: ${foundFile.name}, Type: ${foundFile.type}, Description: ${foundFile.description || 'none'}, Size: ${foundFile.size || 0} bytes]`,
-                  extractedText: foundFile.extractedText || foundFile.content || ''
+                  content: foundFile.type === 'note' ? fileText : `[File: ${foundFile.name}, Type: ${foundFile.type}, Description: ${foundFile.description || 'none'}, Size: ${foundFile.size || 0} bytes]`,
+                  extractedText: fileText
                 });
               } else {
                 toolOutput = 'Warning: File not found with the specified ID.';

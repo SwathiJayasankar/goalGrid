@@ -4,6 +4,7 @@ import { AlertCircle, Loader, TrendingUp } from 'lucide-react';
 export default function PlannerTab({
   goals,
   selectedGoal,
+  setSelectedGoal,
   loadingPlan,
   apiError,
   generatePlan,
@@ -14,19 +15,58 @@ export default function PlannerTab({
   setPlanFeedback,
   categories
 }) {
-  if (selectedGoal === null) {
-    return (
-      <div className="empty-state">
-        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🎯</div>
-        <p>Select a goal from the sidebar to generate an AI plan</p>
-      </div>
-    );
-  }
-
   const goal = goals.find(g => g.id === selectedGoal);
-  if (!goal) return null;
 
   return (
+    <div className="planner-tab-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
+      {/* Mobile-Friendly Goal Switcher Bar */}
+      {goals.length > 0 && (
+        <div className="goal-selector-bar glass-panel" style={{ padding: '14px 18px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#a78bfa', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+              🎯 Your Active Goals ({goals.length})
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', webkitOverflowScrolling: 'touch' }}>
+            {goals.map((g) => {
+              const isSelected = selectedGoal === g.id;
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => setSelectedGoal(g.id)}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '999px',
+                    border: isSelected ? '1px solid #7c3aed' : '1px solid rgba(255,255,255,0.1)',
+                    background: isSelected ? 'linear-gradient(135deg, rgba(124, 58, 237, 0.4) 0%, rgba(79, 70, 229, 0.4) 100%)' : 'rgba(255,255,255,0.03)',
+                    color: isSelected ? '#fff' : '#cbd5e1',
+                    fontSize: '0.82rem',
+                    fontWeight: isSelected ? '600' : '400',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {g.goal}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {selectedGoal === null ? (
+        <div className="empty-state" style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '16px', padding: '40px 20px', textAlign: 'center' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎯</div>
+          <h3 style={{ color: '#fff', fontSize: '1.2rem', marginBottom: '8px' }}>Select or Create a Goal</h3>
+          <p style={{ color: '#94a3b8', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>
+            {goals.length > 0 
+              ? 'Tap any goal pill above to view its AI roadmap and daily execution plan.'
+              : 'Add your first target goal from the sidebar menu to unlock AI Roadmap Planning.'}
+          </p>
+        </div>
+      ) : (
     <div className="plan-section">
       {apiError && (
         <div className="error-message">
@@ -368,6 +408,8 @@ export default function PlannerTab({
           Generate AI Plan
         </button>
       )}
+    </div>
+    )}
     </div>
   );
 }

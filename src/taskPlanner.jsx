@@ -2259,81 +2259,95 @@ export default function TaskPlannerDashboard() {
           <div className="main-content">
             
             {showTaskForm && (
-              <div className="task-form-overlay" style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '20px', border: '1px solid rgba(255,255,255,0.1)', marginBottom: '30px', animation: 'slideInDown 0.3s ease' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <h3 style={{ color: 'white', margin: 0 }}>{editingTask ? 'Edit Task' : 'Add New Task'}</h3>
-                  <button 
-                    onClick={() => {
-                      setEditingTask(null);
-                      setEditingTaskDateKey(null);
-                      setTaskForm({ text: '', startTime: '', endTime: '', category: 'casual', recurrence: 'once', deadline: '' });
-                      setShowTaskForm(false);
-                    }}
-                    style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '1.2rem' }}
-                  >✕</button>
-                </div>
-                <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                    <label style={{ color: '#cbd5e1', fontSize: '0.8rem', display: 'block', marginBottom: '6px' }}>Task Name</label>
-                    <input 
-                      type="text" 
-                      placeholder="What needs to be done?"
-                      value={taskForm.text}
-                      onChange={e => setTaskForm({...taskForm, text: e.target.value})}
-                      style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '10px', color: 'white' }}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label style={{ color: '#cbd5e1', fontSize: '0.8rem', display: 'block', marginBottom: '6px' }}>Start Time (HH:MM)</label>
-                    <input 
-                      type="time" 
-                      value={taskForm.startTime}
-                      onChange={e => setTaskForm({...taskForm, startTime: e.target.value})}
-                      style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '10px', color: 'white', colorScheme: 'dark' }}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label style={{ color: '#cbd5e1', fontSize: '0.8rem', display: 'block', marginBottom: '6px' }}>End Time (HH:MM)</label>
-                    <input 
-                      type="time" 
-                      value={taskForm.endTime}
-                      onChange={e => setTaskForm({...taskForm, endTime: e.target.value})}
-                      style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '10px', color: 'white', colorScheme: 'dark' }}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label style={{ color: '#cbd5e1', fontSize: '0.8rem', display: 'block', marginBottom: '6px' }}>Category</label>
-                    <select 
-                      value={taskForm.category}
-                      onChange={e => setTaskForm({...taskForm, category: e.target.value})}
-                      style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '10px', color: 'white' }}
-                    >
-                      {Object.entries(categories).map(([val, info]) => (
-                        <option key={val} value={val} style={{ background: '#1a1f4b' }}>{info.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label style={{ color: '#cbd5e1', fontSize: '0.8rem', display: 'block', marginBottom: '6px' }}>Recurrence</label>
-                    <select 
-                      value={taskForm.recurrence}
-                      onChange={e => setTaskForm({...taskForm, recurrence: e.target.value})}
-                      style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '10px', color: 'white' }}
-                    >
-                      <option value="once" style={{ background: '#1a1f4b' }}>Once</option>
-                      <option value="daily" style={{ background: '#1a1f4b' }}>Daily</option>
-                      <option value="weekly" style={{ background: '#1a1f4b' }}>Weekly</option>
-                    </select>
-                  </div>
-
-                  <div className="form-actions" style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', marginTop: '10px', gap: '10px' }}>
+              <div className="mobile-modal-overlay" onClick={() => setShowTaskForm(false)}>
+                <div className="mobile-modal-card" onClick={e => e.stopPropagation()}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h3 style={{ color: 'white', margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>{editingTask ? 'Edit Task' : 'Add New Task'}</h3>
                     <button 
-                      className="add-btn" 
-                      onClick={addDetailedTask}
-                      style={{ padding: '10px 24px' }}
-                    >
-                      {editingTask ? 'Update Task' : 'Save Task'}
-                    </button>
+                      onClick={() => {
+                        setEditingTask(null);
+                        setEditingTaskDateKey(null);
+                        setTaskForm({ text: '', startTime: '', endTime: '', category: 'casual', recurrence: 'once', deadline: '' });
+                        setShowTaskForm(false);
+                      }}
+                      style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: '#cbd5e1', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >✕</button>
+                  </div>
+                  <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label style={{ color: '#cbd5e1', fontSize: '0.82rem', display: 'block', marginBottom: '6px' }}>Task Name</label>
+                      <input 
+                        type="text" 
+                        placeholder="What needs to be done?"
+                        value={taskForm.text}
+                        onChange={e => setTaskForm({...taskForm, text: e.target.value})}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '12px', color: 'white', fontSize: '0.95rem' }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label style={{ color: '#cbd5e1', fontSize: '0.82rem', display: 'block', marginBottom: '6px' }}>Start Time</label>
+                      <input 
+                        type="time" 
+                        value={taskForm.startTime}
+                        onChange={e => setTaskForm({...taskForm, startTime: e.target.value})}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '10px', color: 'white', colorScheme: 'dark' }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label style={{ color: '#cbd5e1', fontSize: '0.82rem', display: 'block', marginBottom: '6px' }}>End Time</label>
+                      <input 
+                        type="time" 
+                        value={taskForm.endTime}
+                        onChange={e => setTaskForm({...taskForm, endTime: e.target.value})}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '10px', color: 'white', colorScheme: 'dark' }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label style={{ color: '#cbd5e1', fontSize: '0.82rem', display: 'block', marginBottom: '6px' }}>Category</label>
+                      <select 
+                        value={taskForm.category}
+                        onChange={e => setTaskForm({...taskForm, category: e.target.value})}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '10px', color: 'white' }}
+                      >
+                        {Object.entries(categories).map(([val, info]) => (
+                          <option key={val} value={val} style={{ background: '#1a1f4b' }}>{info.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label style={{ color: '#cbd5e1', fontSize: '0.82rem', display: 'block', marginBottom: '6px' }}>Recurrence</label>
+                      <select 
+                        value={taskForm.recurrence}
+                        onChange={e => setTaskForm({...taskForm, recurrence: e.target.value})}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '10px', color: 'white' }}
+                      >
+                        <option value="once" style={{ background: '#1a1f4b' }}>Once</option>
+                        <option value="daily" style={{ background: '#1a1f4b' }}>Daily</option>
+                        <option value="weekly" style={{ background: '#1a1f4b' }}>Weekly</option>
+                      </select>
+                    </div>
+
+                    <div className="form-actions" style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', marginTop: '14px', gap: '10px' }}>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setEditingTask(null);
+                          setEditingTaskDateKey(null);
+                          setTaskForm({ text: '', startTime: '', endTime: '', category: 'casual', recurrence: 'once', deadline: '' });
+                          setShowTaskForm(false);
+                        }}
+                        style={{ padding: '10px 18px', background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: '10px', color: '#94a3b8', cursor: 'pointer', fontWeight: 500 }}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        className="add-btn" 
+                        onClick={addDetailedTask}
+                        style={{ padding: '10px 24px', borderRadius: '10px', fontWeight: 600 }}
+                      >
+                        {editingTask ? 'Update Task' : 'Save Task'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2397,6 +2411,7 @@ export default function TaskPlannerDashboard() {
               <PlannerTab 
                 goals={goals}
                 selectedGoal={selectedGoal}
+                setSelectedGoal={setSelectedGoal}
                 loadingPlan={loadingPlan}
                 apiError={apiError}
                 generatePlan={generatePlan}

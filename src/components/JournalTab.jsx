@@ -642,7 +642,7 @@ export default function JournalTab({
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         .glass-panel {
           backdrop-filter: blur(10px);
           box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
@@ -650,6 +650,25 @@ export default function JournalTab({
         
         .spinner {
           animation: spin 2s linear infinite;
+        }
+
+        .journal-workspace-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 24px;
+        }
+
+        .trends-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+          .journal-workspace-grid,
+          .trends-grid {
+            grid-template-columns: 1fr !important;
+          }
         }
 
         @keyframes spin {

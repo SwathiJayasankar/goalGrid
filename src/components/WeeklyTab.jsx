@@ -230,15 +230,62 @@ export default function WeeklyTab({
             width: 100%;
           }
         }
+
+        .calendar-header {
+          margin-bottom: 30px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+        }
+
+        .calendar-nav {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+        }
+
+        @media (max-width: 640px) {
+          .weekly-grid {
+            grid-template-columns: 1fr !important;
+            width: 100% !important;
+          }
+          .weekly-main-area {
+            width: 100% !important;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .calendar-header {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 16px !important;
+            text-align: center;
+          }
+
+          .calendar-nav {
+            justify-content: center !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+          }
+
+          .calendar-month {
+            min-width: unset !important;
+            width: 100%;
+            text-align: center;
+            order: -1;
+            margin-bottom: 4px;
+          }
+        }
       `}</style>
 
-      <div className="calendar-header" style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="calendar-header">
         <div>
           <h2 style={{ color: 'white', fontSize: '1.6rem', marginBottom: '4px' }}>Weekly To-Do</h2>
           <p style={{ color: '#a0aec0', fontSize: '0.95rem' }}>Manage your tasks across the week</p>
         </div>
         
-        <div className="calendar-nav" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <div className="calendar-nav">
           <button 
             onClick={() => {
               const newWeek = new Date(currentWeekStart);

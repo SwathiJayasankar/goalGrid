@@ -39,20 +39,21 @@ export default function Header({
   return (
     <header className="top-navbar-header glass-panel">
       {/* Left side: Hamburger button + Breadcrumbs title */}
-      <div className="navbar-left">
+      <div className="navbar-left" style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
         <button 
-          className="navbar-mobile-toggle"
+          className="navbar-mobile-toggle touch-target"
           onClick={onMobileMenuOpen}
           aria-label="Toggle Navigation Sidebar"
+          style={{ cursor: 'pointer' }}
         >
           <Menu size={22} />
         </button>
 
-        <div className="navbar-breadcrumb">
-          <span className="breadcrumb-group">{group}</span>
-          <span className="breadcrumb-separator">/</span>
-          <span className={`breadcrumb-current ${isAi ? 'ai-glow-text' : ''}`}>
-            {isAi && <Sparkles size={12} style={{ display: 'inline-block', marginRight: '6px', color: '#ffb5a7' }} />}
+        <div className="navbar-breadcrumb" style={{ display: 'flex', alignItems: 'center', minWidth: 0, gap: '6px' }}>
+          <span className="breadcrumb-group desktop-only">{group}</span>
+          <span className="breadcrumb-separator desktop-only">/</span>
+          <span className={`breadcrumb-current ${isAi ? 'ai-glow-text' : ''}`} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {isAi && <Sparkles size={12} style={{ display: 'inline-block', marginRight: '4px', color: '#ffb5a7', flexShrink: 0 }} />}
             {page}
           </span>
         </div>

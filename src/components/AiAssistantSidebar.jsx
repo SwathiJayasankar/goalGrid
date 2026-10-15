@@ -13,6 +13,106 @@ import {
   Loader
 } from 'lucide-react';
 
+// Formats inline bold (**text**) and inline code (`code`)
+const formatInline = (text) => {
+  if (!text) return '';
+  
+  // Split by bold patterns (**bold**)
+  const parts = text.split(/\*\*([^*]+)\*\*/g);
+  
+  return parts.flatMap((part, index) => {
+    const isBold = index % 2 === 1;
+    
+    // Split by code block patterns (`code`)
+    const codeParts = part.split(/`([^`]+)`/g);
+    
+    const renderedCodeParts = codeParts.map((subPart, subIdx) => {
+      const isCode = subIdx % 2 === 1;
+      if (isCode) {
+        return (
+          <code key={`${index}-${subIdx}`} style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            color: '#c084fc',
+            fontFamily: 'monospace',
+            fontSize: '0.85em',
+            border: '1px solid rgba(255, 255, 255, 0.05)'
+          }}>
+            {subPart}
+          </code>
+        );
+      }
+      return subPart;
+    });
+
+    if (isBold) {
+      return <strong key={index} style={{ fontWeight: 700, color: '#ffffff' }}>{renderedCodeParts}</strong>;
+    }
+    return renderedCodeParts;
+  });
+};
+
+// Formats basic markdown lines (headers, lists, horizontal rules, paragraphs)
+const renderMarkdown = (text) => {
+  if (!text) return null;
+  
+  const lines = text.split('\n');
+  
+  return lines.map((line, idx) => {
+    const trimmed = line.trim();
+    
+    if (trimmed === '---') {
+      return <hr key={idx} style={{ margin: '14px 0', border: 'none', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }} />;
+    }
+    
+    // Headers (#, ##, ###)
+    if (trimmed.startsWith('### ')) {
+      return <h4 key={idx} style={{ fontSize: '0.95rem', fontWeight: 700, marginTop: '12px', marginBottom: '6px', color: '#ffffff' }}>{formatInline(trimmed.substring(4))}</h4>;
+    }
+    if (trimmed.startsWith('## ')) {
+      return <h3 key={idx} style={{ fontSize: '1.05rem', fontWeight: 800, marginTop: '14px', marginBottom: '8px', color: '#ffffff' }}>{formatInline(trimmed.substring(3))}</h3>;
+    }
+    if (trimmed.startsWith('# ')) {
+      return <h2 key={idx} style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: '16px', marginBottom: '10px', color: '#ffffff' }}>{formatInline(trimmed.substring(2))}</h2>;
+    }
+    
+    // Bullet list items
+    if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+      return (
+        <ul key={idx} style={{ margin: '6px 0', paddingLeft: '18px', listStyleType: 'disc' }}>
+          <li style={{ color: '#e2e8f0', lineHeight: 1.5 }}>
+            {formatInline(trimmed.substring(2))}
+          </li>
+        </ul>
+      );
+    }
+    
+    // Numbered list items
+    const numListMatch = trimmed.match(/^(\d+)\.\s+(.*)$/);
+    if (numListMatch) {
+      return (
+        <ol key={idx} style={{ margin: '6px 0', paddingLeft: '18px', listStyleType: 'decimal' }}>
+          <li value={parseInt(numListMatch[1], 10)} style={{ color: '#e2e8f0', lineHeight: 1.5 }}>
+            {formatInline(numListMatch[2])}
+          </li>
+        </ol>
+      );
+    }
+    
+    // Paragraph spaces
+    if (trimmed === '') {
+      return <div key={idx} style={{ height: '6px' }} />;
+    }
+    
+    return (
+      <p key={idx} style={{ margin: '6px 0', lineHeight: 1.5, color: '#e2e8f0' }}>
+        {formatInline(line)}
+      </p>
+    );
+  });
+};
+
 export default function AiAssistantSidebar({
   isOpen,
   onClose,
@@ -172,7 +272,7 @@ export default function AiAssistantSidebar({
               
               <div className="ai-message-bubble-wrapper">
                 <div className={`ai-message-bubble ${isUser ? 'user-bubble' : 'ai-bubble'}`}>
-                  {msg.content}
+                  {renderMarkdown(msg.content)}
                 </div>
 
                 {/* Thinking Log Accordion */}
@@ -272,7 +372,7 @@ export default function AiAssistantSidebar({
           right: 0;
           width: 380px;
           height: 100vh;
-          background: rgba(10, 12, 16, 0.95) !important;
+          background: rgba(10, 12, 16, 0.98) !important;
           backdrop-filter: blur(28px);
           -webkit-backdrop-filter: blur(28px);
           border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -284,6 +384,21 @@ export default function AiAssistantSidebar({
           z-index: 1051;
           box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5) !important;
           animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @media (max-width: 480px) {
+          .ai-sidebar {
+            width: 100vw !important;
+          }
+          .ai-suggestions-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .ai-message-bubble-wrapper {
+            max-width: calc(100% - 32px) !important;
+          }
         }
 
         .ai-sidebar-header {

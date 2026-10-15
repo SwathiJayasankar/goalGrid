@@ -182,14 +182,14 @@ export default function CalendarTab({
                   placeholder="Event/Task name..."
                   style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '12px', color: 'white' }}
                 />
-                <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr auto', alignItems: 'center' }}>
-                  <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr auto' }}>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '10px', flex: 1, minWidth: '200px' }}>
                     <input 
                       type="time" 
                       id="cal-time"
-                      style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px', color: 'white', colorScheme: 'dark' }} 
+                      style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px', color: 'white', colorScheme: 'dark' }} 
                     />
-                    <select id="cal-cat" style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px', color: 'white' }}>
+                    <select id="cal-cat" style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px', color: 'white' }}>
                       {Object.entries(categories).map(([val, info]) => (
                         <option key={val} value={val} style={{ background: '#1a1f4b' }}>{info.label}</option>
                       ))}

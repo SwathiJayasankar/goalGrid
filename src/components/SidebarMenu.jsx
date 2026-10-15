@@ -165,8 +165,8 @@ export default function SidebarMenu({
                 <User size={16} />
               </div>
               {!isCollapsed && (
-                <div className="profile-details">
-                  <span className="profile-email" title={userEmail}>{userEmail}</span>
+                <div className="profile-details" style={{ overflow: 'hidden', minWidth: 0, flex: 1 }}>
+                  <span className="profile-email" title={userEmail} style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail}</span>
                   <span className="profile-role">Pro Account</span>
                 </div>
               )}

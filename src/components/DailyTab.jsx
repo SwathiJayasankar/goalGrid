@@ -211,7 +211,7 @@ export default function DailyTab({
         {showRoutineEditor ? (
           <div className="routine-editor" style={{ animation: 'slideInRight 0.3s ease' }}>
             <div style={{ color: '#93c5fd', fontSize: '0.85rem', fontWeight: '700', marginBottom: '16px', textTransform: 'uppercase' }}>Add Routine Activity</div>
-            <div className="task-input-group" style={{ marginBottom: '24px', display: 'flex', gap: '8px' }}>
+            <div className="task-input-group" style={{ marginBottom: '24px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <input 
                 type="time" 
                 id="routine-time"
