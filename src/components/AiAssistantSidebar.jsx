@@ -371,7 +371,8 @@ export default function AiAssistantSidebar({
           top: 0;
           right: 0;
           width: 380px;
-          height: 100vh;
+          height: 100dvh;
+          height: 100vh; /* fallback */
           background: rgba(10, 12, 16, 0.98) !important;
           backdrop-filter: blur(28px);
           -webkit-backdrop-filter: blur(28px);
@@ -384,6 +385,7 @@ export default function AiAssistantSidebar({
           z-index: 1051;
           box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5) !important;
           animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          overflow: hidden;
         }
 
         @media (max-width: 480px) {
@@ -448,11 +450,14 @@ export default function AiAssistantSidebar({
 
         .ai-messages-container {
           flex: 1;
+          min-height: 0;
           overflow-y: auto;
-          padding: 24px;
+          overflow-x: hidden;
+          padding: 20px 16px;
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          gap: 16px;
+          -webkit-overflow-scrolling: touch;
         }
 
         .ai-message-row {
@@ -616,8 +621,9 @@ export default function AiAssistantSidebar({
 
         /* Suggestions Panel */
         .ai-suggestions-panel {
-          padding: 16px 24px;
+          padding: 12px 16px;
           border-top: 1px solid rgba(255, 255, 255, 0.04);
+          flex-shrink: 0;
         }
 
         .suggest-title {
@@ -658,22 +664,26 @@ export default function AiAssistantSidebar({
           transform: translateY(-1px);
         }
 
-        /* Input Input-wrapper */
+        /* Input wrapper — sticky to bottom, always visible above keyboard */
         .ai-input-wrapper {
-          padding: 16px 24px 24px;
+          padding: 12px 16px;
+          padding-bottom: max(16px, env(safe-area-inset-bottom));
           display: flex;
-          gap: 12px;
+          gap: 10px;
           border-top: 1px solid rgba(255, 255, 255, 0.06);
+          background: rgba(10, 12, 16, 0.98);
+          flex-shrink: 0;
         }
 
         .ai-input-wrapper input {
           flex: 1;
+          min-width: 0;
           background: rgba(255, 255, 255, 0.04);
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 12px;
-          padding: 12px 16px;
+          padding: 12px 14px;
           color: white;
-          font-size: 0.88rem;
+          font-size: 0.9rem;
           outline: none;
           transition: all 0.2s ease;
         }
@@ -691,11 +701,13 @@ export default function AiAssistantSidebar({
           border-radius: 12px;
           width: 44px;
           height: 44px;
+          min-width: 44px;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
           transition: all 0.2s ease;
+          flex-shrink: 0;
         }
 
         .ai-send-btn:hover {

@@ -231,12 +231,12 @@ export default function JournalTab({
 
   return (
     <div className="journal-container" style={{ animation: 'slideInUp 0.5s ease-out' }}>
-      <div className="animate-fade" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div className="animate-fade journal-top-header">
         <div>
           <h2 className="gradient-text" style={{ margin: 0, fontSize: '2rem', fontWeight: 700 }}>AI Reflection Space</h2>
           <p style={{ color: 'var(--text-muted)', marginTop: '8px', fontSize: '0.95rem' }}>Reflect on your journey, understand your patterns, and grow.</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="journal-top-header-actions">
           <button
             onClick={() => fetchTrends()}
             className="premium-button"
@@ -397,20 +397,7 @@ export default function JournalTab({
             value={entry}
             onChange={(e) => handleSaveEntry(e.target.value)}
             placeholder="How was your day? What did you learn? Any challenges you faced?"
-            style={{
-              width: '100%',
-              minHeight: '400px',
-              background: 'rgba(0, 0, 0, 0.2)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '16px',
-              padding: '20px',
-              color: '#e2e8f0',
-              fontSize: '1.1rem',
-              lineHeight: '1.6',
-              resize: 'none',
-              outline: 'none',
-              transition: 'all 0.3s ease'
-            }}
+            className="journal-textarea"
           />
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -571,7 +558,7 @@ export default function JournalTab({
       {showChat && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div onClick={() => setShowChat(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }} />
-          <div className="glass-panel" style={{ position: 'relative', width: '100%', maxWidth: '600px', height: '600px', background: '#111827', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+          <div className="glass-panel journal-chat-modal-inner">
 
             <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -664,10 +651,80 @@ export default function JournalTab({
           gap: 20px;
         }
 
+        .journal-top-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 24px;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+
+        .journal-top-header-actions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .journal-textarea {
+          width: 100%;
+          min-height: 400px;
+          background: rgba(0, 0, 0, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 16px;
+          padding: 20px;
+          color: #e2e8f0;
+          font-size: 1.1rem;
+          line-height: 1.6;
+          resize: none;
+          outline: none;
+          transition: all 0.3s ease;
+        }
+
+        .journal-chat-modal-inner {
+          position: relative;
+          width: 100%;
+          max-width: 600px;
+          height: 600px;
+          background: #111827;
+          border-radius: 24px;
+          border: 1px solid rgba(255,255,255,0.1);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+
         @media (max-width: 900px) {
           .journal-workspace-grid,
           .trends-grid {
             grid-template-columns: 1fr !important;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .journal-top-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+          }
+
+          .journal-top-header-actions {
+            width: 100%;
+            justify-content: space-between;
+          }
+
+          .journal-textarea {
+            min-height: 220px !important;
+            font-size: 0.95rem !important;
+            padding: 14px !important;
+          }
+
+          .journal-chat-modal-inner {
+            height: 90vh !important;
+            max-height: 90vh !important;
+            border-radius: 16px !important;
           }
         }
 

@@ -1391,6 +1391,8 @@ export default function TaskPlannerDashboard() {
           border-radius: 24px;
           padding: 32px;
           box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+          overflow-x: hidden;
+          min-width: 0;
         }
 
         .sidebar {
@@ -1532,6 +1534,7 @@ export default function TaskPlannerDashboard() {
           color: white;
           margin-bottom: 24px;
           font-weight: 700;
+          word-break: break-word;
         }
 
         .empty-state {
@@ -1682,6 +1685,11 @@ export default function TaskPlannerDashboard() {
           grid-template-columns: repeat(7, 1fr);
           gap: 10px;
           margin-top: 24px;
+        }
+
+        .calendar-container {
+          overflow-x: hidden;
+          width: 100%;
         }
 
         .calendar-header {
@@ -2138,7 +2146,7 @@ export default function TaskPlannerDashboard() {
           }
 
           .main-content {
-            padding: 20px 16px;
+            padding: 16px 14px;
             border-radius: 16px;
           }
 
@@ -2166,9 +2174,14 @@ export default function TaskPlannerDashboard() {
           .calendar-nav {
             justify-content: center;
             flex-wrap: wrap;
-            border-radius: 20px !important;
-            padding: 8px !important;
-            gap: 8px !important;
+            border-radius: 16px !important;
+            padding: 6px !important;
+            gap: 6px !important;
+          }
+
+          .nav-button {
+            width: 34px !important;
+            height: 34px !important;
           }
 
           .calendar-month {
@@ -2205,14 +2218,98 @@ export default function TaskPlannerDashboard() {
 
           .calendar-day {
             aspect-ratio: 1 !important;
-            padding: 4px !important;
-            min-height: 55px !important;
+            padding: 3px 2px !important;
+            min-height: 0 !important;
+            border-radius: 7px !important;
+          }
+
+          .calendar-day-number {
+            font-size: 0.75rem !important;
+          }
+
+          .calendar-grid {
+            gap: 3px !important;
+            margin-top: 12px !important;
+          }
+
+          .calendar-day-name {
+            font-size: 0.6rem !important;
+            padding: 5px 0 !important;
+            letter-spacing: 0 !important;
+          }
+
+          /* AI Roadmap / Planner */
+          .plan-title {
+            font-size: 1.3rem !important;
+            margin-bottom: 16px !important;
+            word-break: break-word;
+          }
+
+          .plan-section {
+            overflow-x: hidden;
+          }
+
+          /* Daily */
+          .daily-todos {
+            grid-template-columns: 1fr !important;
+            gap: 20px !important;
+          }
+
+          .todo-item {
+            padding: 12px 14px !important;
+          }
+
+          /* Selected date panel */
+          .selected-date-tasks {
+            padding: 16px !important;
+            margin-top: 20px !important;
+          }
+
+          .selected-date-title {
+            font-size: 1rem !important;
+            flex-wrap: wrap;
           }
         }
 
         @media (max-width: 480px) {
           .auth-modal-box {
             padding: 24px !important;
+          }
+
+          .main-content {
+            padding: 12px 10px !important;
+            border-radius: 12px !important;
+          }
+
+          .planner-tab-container {
+            overflow-x: hidden;
+          }
+
+          .roadmap-timeline {
+            padding-left: 16px !important;
+          }
+
+          .calendar-grid {
+            gap: 2px !important;
+          }
+
+          .calendar-day {
+            border-radius: 5px !important;
+            padding: 2px !important;
+          }
+
+          .calendar-day-number {
+            font-size: 0.68rem !important;
+          }
+
+          .generate-btn {
+            padding: 12px 16px !important;
+            font-size: 0.88rem !important;
+            width: 100%;
+          }
+
+          .plan-title {
+            font-size: 1.1rem !important;
           }
         }
 
