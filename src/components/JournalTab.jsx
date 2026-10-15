@@ -230,7 +230,7 @@ export default function JournalTab({
   };
 
   return (
-    <div className="journal-container" style={{ animation: 'slideInUp 0.5s ease-out' }}>
+    <div className="journal-container" style={{ animation: 'slideInUp 0.5s ease-out', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
       <div className="animate-fade journal-top-header">
         <div>
           <h2 className="gradient-text" style={{ margin: 0, fontSize: '2rem', fontWeight: 700 }}>AI Reflection Space</h2>
@@ -341,7 +341,7 @@ export default function JournalTab({
 
       <div className="journal-workspace-grid">
         {/* Editor Section */}
-        <div className="glass-panel" style={{ padding: '24px', borderRadius: '24px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="glass-panel journal-editor-card" style={{ padding: '24px', borderRadius: '24px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <BookOpen size={20} style={{ color: '#a78bfa' }} />
@@ -368,29 +368,24 @@ export default function JournalTab({
             </button>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', padding: '12px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-            <div style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'flex', alignItems: 'center', marginRight: '8px' }}>Today's Mood:</div>
-            {moodOptions.map((opt) => (
-              <button
-                key={opt.label}
-                onClick={() => handleMoodSelect(opt.label)}
-                style={{
-                  background: selectedMood === opt.label ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                  border: selectedMood === opt.label ? `1px solid ${opt.color}` : '1px solid transparent',
-                  padding: '6px 12px',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '4px',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <span style={{ fontSize: '1.2rem' }}>{opt.emoji}</span>
-                <span style={{ fontSize: '0.65rem', color: selectedMood === opt.label ? 'white' : '#64748b' }}>{opt.label}</span>
-              </button>
-            ))}
+          <div className="mood-row">
+            <div className="mood-label">Today's Mood:</div>
+            <div className="mood-buttons">
+              {moodOptions.map((opt) => (
+                <button
+                  key={opt.label}
+                  onClick={() => handleMoodSelect(opt.label)}
+                  className={`mood-btn ${selectedMood === opt.label ? 'selected' : ''}`}
+                  style={{
+                    '--mood-color': opt.color,
+                    border: selectedMood === opt.label ? `1px solid ${opt.color}` : '1px solid transparent',
+                  }}
+                >
+                  <span className="mood-emoji">{opt.emoji}</span>
+                  <span className="mood-text">{opt.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <textarea
@@ -634,15 +629,18 @@ export default function JournalTab({
           backdrop-filter: blur(10px);
           box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
-        
+
         .spinner {
           animation: spin 2s linear infinite;
         }
 
+        /* ── Layout ── */
         .journal-workspace-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 24px;
+          width: 100%;
+          box-sizing: border-box;
         }
 
         .trends-grid {
@@ -651,22 +649,92 @@ export default function JournalTab({
           gap: 20px;
         }
 
+        /* ── Top Header ── */
         .journal-top-header {
           display: flex;
           justify-content: space-between;
-          align-items: center;
+          align-items: flex-start;
           margin-bottom: 24px;
-          gap: 16px;
+          gap: 12px;
           flex-wrap: wrap;
         }
 
         .journal-top-header-actions {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 10px;
           flex-wrap: wrap;
+          flex-shrink: 0;
         }
 
+        /* ── Editor Card ── */
+        .journal-editor-card {
+          min-width: 0;
+          overflow: hidden;
+          box-sizing: border-box;
+          width: 100%;
+        }
+
+        /* ── Mood Row ── */
+        .mood-row {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.02);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .mood-label {
+          font-size: 0.78rem;
+          color: #94a3b8;
+          font-weight: 500;
+        }
+
+        .mood-buttons {
+          display: flex;
+          gap: 4px;
+          flex-wrap: wrap;
+          width: 100%;
+        }
+
+        .mood-btn {
+          background: transparent;
+          padding: 6px 8px;
+          border-radius: 12px;
+          cursor: pointer;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 3px;
+          transition: all 0.2s ease;
+          flex: 1;
+          min-width: 44px;
+        }
+
+        .mood-btn.selected {
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        .mood-emoji {
+          font-size: 1.3rem;
+          line-height: 1;
+        }
+
+        .mood-text {
+          font-size: 0.62rem;
+          color: #64748b;
+          white-space: nowrap;
+        }
+
+        .mood-btn.selected .mood-text {
+          color: white;
+        }
+
+        /* ── Textarea ── */
         .journal-textarea {
           width: 100%;
           min-height: 400px;
@@ -680,8 +748,10 @@ export default function JournalTab({
           resize: none;
           outline: none;
           transition: all 0.3s ease;
+          box-sizing: border-box;
         }
 
+        /* ── Deep Dive Chat Modal ── */
         .journal-chat-modal-inner {
           position: relative;
           width: 100%;
@@ -696,6 +766,7 @@ export default function JournalTab({
           box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
         }
 
+        /* ── Responsive ── */
         @media (max-width: 900px) {
           .journal-workspace-grid,
           .trends-grid {
@@ -707,24 +778,47 @@ export default function JournalTab({
           .journal-top-header {
             flex-direction: column;
             align-items: flex-start;
-            gap: 12px;
+            gap: 10px;
+          }
+
+          .journal-top-header h2.gradient-text {
+            font-size: 1.5rem !important;
           }
 
           .journal-top-header-actions {
             width: 100%;
             justify-content: space-between;
+            gap: 8px;
+          }
+
+          .journal-editor-card {
+            padding: 14px !important;
+            border-radius: 16px !important;
           }
 
           .journal-textarea {
-            min-height: 220px !important;
+            min-height: 200px !important;
             font-size: 0.95rem !important;
-            padding: 14px !important;
+            padding: 12px !important;
           }
 
           .journal-chat-modal-inner {
             height: 90vh !important;
             max-height: 90vh !important;
             border-radius: 16px !important;
+          }
+
+          .mood-btn {
+            min-width: 40px;
+            padding: 5px 4px;
+          }
+
+          .mood-emoji {
+            font-size: 1.15rem;
+          }
+
+          .mood-text {
+            font-size: 0.56rem;
           }
         }
 

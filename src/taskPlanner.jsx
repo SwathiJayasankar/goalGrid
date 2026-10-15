@@ -861,6 +861,7 @@ export default function TaskPlannerDashboard() {
           flex-direction: column;
           padding: 24px 32px 32px 32px;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          overflow-x: hidden;
         }
 
         /* Sidebar Container */
@@ -1206,6 +1207,7 @@ export default function TaskPlannerDashboard() {
           margin-bottom: 24px;
           background: rgba(255, 255, 255, 0.02);
           border: 1px solid rgba(255, 255, 255, 0.06);
+          overflow: hidden;
         }
 
         .navbar-left {
@@ -1250,7 +1252,8 @@ export default function TaskPlannerDashboard() {
         .navbar-right {
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 10px;
+          flex-shrink: 0;
         }
 
         .navbar-sync-icon {
@@ -2083,6 +2086,27 @@ export default function TaskPlannerDashboard() {
           .navbar-signin-btn {
             display: block !important;
           }
+
+          /* Hide desktop-only breadcrumb group text on mobile */
+          .desktop-only {
+            display: none !important;
+          }
+
+          /* Compact navbar on mobile */
+          .top-navbar-header {
+            height: 52px !important;
+            padding: 0 14px !important;
+            border-radius: 12px !important;
+            margin-bottom: 16px !important;
+          }
+
+          .breadcrumb-current {
+            font-size: 0.82rem !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 160px;
+          }
         }
 
         @media (max-width: 768px) {
@@ -2279,6 +2303,15 @@ export default function TaskPlannerDashboard() {
           .main-content {
             padding: 12px 10px !important;
             border-radius: 12px !important;
+          }
+
+          /* Hide user email text—show only avatar icon in navbar */
+          .user-email-narrow {
+            display: none !important;
+          }
+
+          .navbar-right {
+            gap: 6px !important;
           }
 
           .planner-tab-container {
