@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const User = require('../models/User');
+const { repairJson, normalizePlan } = require('../utils/jsonRepair');
 
 // @route   GET api/planner/sync
 // @desc    Get user's full task planner data
@@ -203,8 +204,9 @@ Generate 2-4 targeted questions for this specific goal.`;
       },
       body: JSON.stringify({
         model: model,
-        max_tokens: 800,
+        max_tokens: 1000,
         temperature: 0.2,
+        response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userContent }
@@ -221,13 +223,14 @@ Generate 2-4 targeted questions for this specific goal.`;
     const content = data?.choices?.[0]?.message?.content;
     if (!content) throw new Error('No AI content returned');
 
-    // Parse JSON from AI response
-    const start = content.indexOf('{');
-    const end = content.lastIndexOf('}');
-    if (start === -1 || end === -1) throw new Error('No JSON in response');
-
-    const parsed = JSON.parse(content.substring(start, end + 1));
-    res.json({ questions: parsed.questions || [] });
+    // Parse JSON from AI response with robust repair
+    let parsed = null;
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      parsed = repairJson(content);
+    }
+    res.json({ questions: parsed?.questions || [] });
   } catch (err) {
     console.error('Pre-plan questions error:', err);
     res.status(500).json({ message: 'Error generating questions: ' + err.message, questions: [] });
@@ -276,14 +279,16 @@ router.post('/generate-plan', auth, async (req, res) => {
       3. HIGH-DENSITY, LOW-FREQUENCY: Do not fill the day with many small tasks. Aim for 1-3 significant "Mission Critical" sessions per day.
       4. DIRECT ROADMAP MAPPING: Every time slot in the "weeklySchedule" must correspond to a specific, difficult milestone from the "ROADMAP" section. 
       5. SLOT AWARENESS: Respect the "Daily Routine" and "Existing Tasks" as hard blocks. Do not double-book.
-      6. DEADLINE ENFORCEMENT (STRICT): If the goal mentions a specific date or deadline (e.g., "May 20th", "this Wednesday", "by Friday"), your planning MUST STOP at that deadline. Do not provide a generic full-week schedule. The "roadmap" and "weeklySchedule" should only cover the time leading up to and including the deadline day.
+      6. DEADLINE & TIMELINE ENFORCEMENT:
+         - If the goal has a specific deadline (e.g. "by Friday", "Feb 12th"):
+           * "roadmap": Must map the COMPLETE strategic roadmap from start date all the way to the final deadline (covering all phases, subjects, or milestones).
+           * "weeklySchedule": Provide the detailed day-by-day execution plan for up to the first 2 to 4 weeks (or up to the deadline if it occurs within 4 weeks). DO NOT generate more than 4 weeks in "weeklySchedule" to keep the execution plan actionable, dense, and complete.
       7. focus more on doing the tasks and not on planning or reviewing them
       
       STRUCTURE RULES:
-      - ROADMAP: The strategic high-level milestones.
-      - WEEKLY SCHEDULE: The PURE EXECUTION of those milestones. No prep, no rest, no fluff.
-      - DEADLINE: If a deadline is mentioned (e.g., 'by Friday'), the plan MUST terminate at that deadline. 
-      - FORMAT: Strict JSON. No conversational text outside the JSON block.
+      - ROADMAP: The strategic high-level milestones covering the entire journey up to the deadline.
+      - WEEKLY SCHEDULE: The PURE EXECUTION of milestones for up to 4 weeks. No prep, no rest, no fluff.
+      - FORMAT: Strict JSON only matching the schema below.
 
       JSON STRUCTURE:
       {
@@ -355,8 +360,9 @@ Please ensure your schedule logic follows this calendar correctly.`;
       },
       body: JSON.stringify({
         model: model,
-        max_tokens: 4000,
+        max_tokens: 8000,
         temperature: 0.2,
+        response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userContent }
@@ -375,21 +381,22 @@ Please ensure your schedule logic follows this calendar correctly.`;
       throw new Error('Groq API returned an empty response.');
     }
 
-    let planData;
-    try {
+    let planData = repairJson(planText);
+    if (!planData) {
       const start = planText.indexOf('{');
       const end = planText.lastIndexOf('}');
-      if (start === -1 || end === -1) {
-        throw new Error("No JSON found in response");
+      if (start !== -1 && end !== -1) {
+        try {
+          planData = normalizePlan(JSON.parse(planText.substring(start, end + 1)));
+        } catch {}
       }
-      const jsonStr = planText.substring(start, end + 1);
-      planData = JSON.parse(jsonStr);
-    } catch (parseError) {
-      console.error('Failed to parse plan JSON on backend:', parseError);
+    }
+
+    if (!planData) {
+      console.error('Failed to parse plan JSON on backend after repair attempts');
       planData = {
         error: 'Could not parse plan',
-        content: planText,
-        message: parseError.message
+        content: planText
       };
     }
 

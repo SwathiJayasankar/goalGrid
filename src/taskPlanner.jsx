@@ -17,7 +17,7 @@ import FileManagementTab from './components/FileManagementTab';
 import AiAssistantSidebar from './components/AiAssistantSidebar';
 
 // Shared Utilities
-import { categories, formatDate } from './utils/plannerHelpers';
+import { categories, formatDate, repairPlanJson } from './utils/plannerHelpers';
 
 // Base API URL
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -767,7 +767,13 @@ export default function TaskPlannerDashboard() {
         throw new Error(errorText || `Failed to generate plan: ${response.status}`);
       }
 
-      const planData = await response.json();
+      let planData = await response.json();
+      if (planData && planData.error && planData.content) {
+        const repaired = repairPlanJson(planData.content);
+        if (repaired && (repaired.title || (repaired.roadmap && repaired.roadmap.length > 0))) {
+          planData = repaired;
+        }
+      }
       setGoals(goals.map(g => 
         g.id === goalId ? { ...g, plan: planData, generatedAt: new Date() } : g
       ));

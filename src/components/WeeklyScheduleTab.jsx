@@ -1,5 +1,6 @@
 import React from 'react';
 import { Trash2, Loader, TrendingUp } from 'lucide-react';
+import { repairPlanJson } from '../utils/plannerHelpers';
 
 export default function WeeklyScheduleTab({
   goals,
@@ -27,7 +28,14 @@ export default function WeeklyScheduleTab({
   }
 
   const goal = goals.find(g => g.id === selectedGoal);
-  const plan = goal?.plan;
+  let plan = goal?.plan;
+  
+  if (plan && plan.error && plan.content) {
+    const repaired = repairPlanJson(plan.content);
+    if (repaired) {
+      plan = repaired;
+    }
+  }
   
   if (!plan) {
     return (

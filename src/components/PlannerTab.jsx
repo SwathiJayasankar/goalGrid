@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { AlertCircle, Loader, TrendingUp, CheckCircle2, ClipboardList, Sparkles } from 'lucide-react';
+import { repairPlanJson } from '../utils/plannerHelpers';
 
 // ─── Intake Question Card (inline, for Planner tab) ────────────────────────
 function PlanIntakeCard({ questions, goalDescription, onSubmit, onSkip, loading }) {
@@ -287,32 +288,72 @@ export default function PlannerTab({
         </div>
       ) : goal.plan ? (
         (() => {
-          const plan = goal.plan;
+          let plan = goal.plan;
+          let wasAutoRecovered = false;
           
           if (plan.error) {
-            return (
-              <div className="error-message">
-                <AlertCircle size={16} style={{ flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontWeight: '600', marginBottom: '8px' }}>Formatting Error</div>
-                  <p style={{ fontSize: '0.85rem', marginBottom: '12px' }}>The AI response couldn't be automatically formatted. You can see the raw plan below or try generating it again.</p>
-                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '4px', fontSize: '0.8rem', whiteSpace: 'pre-wrap', maxHeight: '300px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    {plan.content}
+            // Attempt auto-recovery from raw response content
+            const recovered = plan.content ? repairPlanJson(plan.content) : null;
+            if (recovered && (recovered.title || (recovered.roadmap && recovered.roadmap.length > 0))) {
+              plan = recovered;
+              wasAutoRecovered = true;
+            } else {
+              return (
+                <div className="error-message">
+                  <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontWeight: '600', marginBottom: '8px' }}>Formatting Error</div>
+                    <p style={{ fontSize: '0.85rem', marginBottom: '12px' }}>The AI response couldn't be automatically formatted. You can see the raw plan below or try generating it again.</p>
+                    <div style={{ background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '4px', fontSize: '0.8rem', whiteSpace: 'pre-wrap', maxHeight: '300px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      {plan.content}
+                    </div>
+                    <button 
+                      className="generate-btn" 
+                      style={{ marginTop: '16px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
+                      onClick={() => generatePlan(selectedGoal)}
+                    >
+                      Try Again
+                    </button>
                   </div>
-                  <button 
-                    className="generate-btn" 
-                    style={{ marginTop: '16px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
-                    onClick={() => generatePlan(selectedGoal)}
-                  >
-                    Try Again
-                  </button>
                 </div>
-              </div>
-            );
+              );
+            }
           }
           
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {wasAutoRecovered && (
+                <div style={{ 
+                  background: 'rgba(245, 158, 11, 0.12)', 
+                  border: '1px solid rgba(245, 158, 11, 0.3)', 
+                  color: '#fbbf24', 
+                  padding: '10px 14px', 
+                  borderRadius: '8px', 
+                  fontSize: '0.85rem', 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '8px'
+                }}>
+                  <span>⚡ Plan automatically parsed and recovered from raw AI response.</span>
+                  <button 
+                    onClick={() => generatePlan(selectedGoal)} 
+                    style={{ 
+                      background: 'transparent', 
+                      border: '1px solid #fbbf24', 
+                      color: '#fbbf24', 
+                      padding: '4px 10px', 
+                      borderRadius: '5px', 
+                      cursor: 'pointer', 
+                      fontSize: '0.78rem',
+                      fontWeight: '600'
+                    }}
+                  >
+                    Regenerate Fresh Plan
+                  </button>
+                </div>
+              )}
               {plan.timeline && (
                 <div style={{ background: 'rgba(59, 130, 246, 0.2)', padding: '12px 16px', borderRadius: '6px', color: '#93c5fd', fontSize: '0.9rem', borderLeft: '3px solid #3b82f6' }}>
                   ⏱️ <strong>Timeline:</strong> {plan.timeline}
