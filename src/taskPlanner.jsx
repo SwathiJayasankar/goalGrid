@@ -735,9 +735,9 @@ export default function TaskPlannerDashboard() {
     alert('All goal tasks have been removed from your schedule.');
   };
 
-  const generatePlan = async (goalId, feedback = '') => {
+  const generatePlan = async (goalId, feedback = '', userContext = []) => {
     const goal = goals.find(g => g.id === goalId);
-    if (!goal || (goal.plan && !feedback)) return;
+    if (!goal || (goal.plan && !feedback && !userContext.length)) return;
 
     setLoadingPlan(goalId);
     setApiError('');
@@ -753,7 +753,8 @@ export default function TaskPlannerDashboard() {
           goal,
           feedback,
           fixedRoutine,
-          calendarTasks
+          calendarTasks,
+          userContext
         })
       });
 
@@ -2551,6 +2552,10 @@ export default function TaskPlannerDashboard() {
                 planFeedback={planFeedback}
                 setPlanFeedback={setPlanFeedback}
                 categories={categories}
+                token={token}
+                API_URL={API_URL}
+                fixedRoutine={fixedRoutine}
+                calendarTasks={calendarTasks}
               />
             )}
 

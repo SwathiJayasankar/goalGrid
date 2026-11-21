@@ -152,12 +152,49 @@ const agentTools = [
   {
     type: "function",
     function: {
-      name: "create_local_goal",
-      description: "Adds a new goal to the goals panel.",
+      name: "ask_clarifying_questions",
+      description: "ALWAYS call this tool BEFORE calling create_local_goal. It pauses goal creation and asks the user 2-4 targeted clarifying questions — so the final goal and plan are based on their exact situation, not assumptions. Call this whenever a user wants to add a goal, target, prepare for an exam, start a project, or achieve anything new. For example: if a user says 'I have an algo quiz next Monday', ask whether they have their own syllabus to work from, how many hours per day they can study, and whether they want topic-specific tasks or just timed study blocks. Do NOT call create_local_goal without first asking questions.",
       parameters: {
         type: "object",
         properties: {
-          goalText: { type: "string", description: "Detailed description of the goal" }
+          goalDescription: { type: "string", description: "A brief, clean rephrasing of the goal the user mentioned, without making assumptions" },
+          questions: {
+            type: "array",
+            description: "2 to 4 targeted questions. Each must address something that would meaningfully change what gets created — deadline, syllabus, hours available, output format preference, etc. Make them specific to the user's particular goal, not generic. Skip questions whose answers are already clear from the user's message.",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string", description: "Short unique id: q1, q2, q3, q4" },
+                question: { type: "string", description: "The exact question text to show the user" },
+                hint: { type: "string", description: "A short example answer or placeholder hint shown in the input field" },
+                type: {
+                  type: "string",
+                  enum: ["text", "choice", "syllabus"],
+                  description: "text = free-form answer, choice = user picks from given options, syllabus = user can paste their syllabus or topic list"
+                },
+                options: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Required when type is 'choice'. 3-5 clear, distinct options to pick from."
+                }
+              },
+              required: ["id", "question", "hint", "type"]
+            }
+          }
+        },
+        required: ["goalDescription", "questions"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_local_goal",
+      description: "Adds a new goal to the goals panel. Only call this AFTER the user has answered clarifying questions from ask_clarifying_questions. Incorporate their answers (deadline, syllabus content, time available, etc.) into a rich, specific goalText. Never call this as the first tool when a user mentions wanting to do something.",
+      parameters: {
+        type: "object",
+        properties: {
+          goalText: { type: "string", description: "Detailed, context-rich goal description incorporating the user's clarified answers — deadline, hours, topic scope, constraints, preferred planning style, etc." }
         },
         required: ["goalText"]
       }
@@ -250,10 +287,17 @@ Here is a general snapshot of the user's workspace for quick context:
 
 CORE ACTIONS POLICY:
 1. USE YOUR TOOLS whenever requested to add/toggle/delete tasks, create goals, adjust routines, write journal reflections, or look up information.
-2. If the user asks you to write reflection drafts, research morning guidelines, or schedule an study session, do NOT just say you will do it—ACTUALLY call the appropriate tool.
+2. If the user asks you to write reflection drafts, research morning guidelines, or schedule a study session, do NOT just say you will do it—ACTUALLY call the appropriate tool.
 3. Keep answers friendly, succinct and coaching-focused. Refrain from listing JSON traces in your final answer; instead summarize what actions were completed.
 4. Normalize times (like "14:00" to "02:00 PM") to avoid scheduler crashes.
 5. If the user asks you to do something complex, you can invoke multiple tools in succession. For example, search the web first, then write a task based on findings.
+
+CRITICAL GOAL CREATION POLICY — ALWAYS FOLLOW:
+- NEVER call create_local_goal as the FIRST tool when a user mentions a goal, exam, project, or target.
+- ALWAYS call ask_clarifying_questions FIRST to understand: deadline, how much time they can commit, whether they have their own syllabus/content to work from, and what kind of output they prefer.
+- Example: If the user says "I have an algorithms quiz on Monday" → DO NOT immediately create a goal with generic algorithm topics. FIRST ask: Do they have their own syllabus? How many hours can they study each day? Do they want topic-specific tasks or just study time blocks?
+- Only call create_local_goal AFTER the user has provided answers to your clarifying questions.
+- When creating the goal after intake, incorporate all their answers into a rich, specific goalText so the AI planner can generate an accurate plan.
 `;
 
   // 3. Assemble message arrays
@@ -278,6 +322,7 @@ CORE ACTIONS POLICY:
   let iterations = 0;
   const maxIterations = 5; // prevent infinite recursion
   let finalReply = '';
+  let intakeQuestions = null; // set when ask_clarifying_questions is called
 
   while (isThinking && iterations < maxIterations) {
     iterations++;
@@ -382,6 +427,21 @@ CORE ACTIONS POLICY:
                 journalEntries: filteredJournals,
                 journalMoods: user.journalMoods || {}
               });
+              break;
+
+            case 'ask_clarifying_questions':
+              // This tool intercepts goal creation — it stops the loop and returns
+              // questions to the frontend to collect user input before proceeding.
+              stepText = `Preparing ${toolArgs.questions?.length || 0} clarifying questions for: "${toolArgs.goalDescription}"`;
+              intakeQuestions = {
+                goalDescription: toolArgs.goalDescription,
+                questions: toolArgs.questions || []
+              };
+              toolOutput = `✓ Clarifying questions prepared for: "${toolArgs.goalDescription}". Waiting for user input.`;
+              
+              // After collecting intakeQuestions, stop the loop immediately so the
+              // frontend can render the question cards and wait for user answers.
+              isThinking = false;
               break;
 
             case 'create_local_task':
@@ -536,6 +596,9 @@ CORE ACTIONS POLICY:
           result: toolOutput.substring(0, 1500) // cap size
         });
 
+        // If the loop was stopped by ask_clarifying_questions, break immediately
+        if (!isThinking) break;
+
         // Append tool completion msg back to assistant loop
         messages.push({
           role: 'tool',
@@ -551,15 +614,21 @@ CORE ACTIONS POLICY:
   }
 
   // 4. Save any DB changes state
-  let workspaceMutated = steps.some(s => s.tool !== 'search_web' && s.tool !== 'get_user_data');
+  let workspaceMutated = steps.some(s => s.tool !== 'search_web' && s.tool !== 'get_user_data' && s.tool !== 'ask_clarifying_questions');
   if (workspaceMutated) {
     await user.save();
+  }
+
+  // 5. If intake questions were generated, build the AI reply message to pair with the cards
+  if (intakeQuestions) {
+    finalReply = finalReply || `I'd love to help you with **"${intakeQuestions.goalDescription}"**! Before I set this up, I have a few quick questions so the plan actually fits your situation — not just a generic one.`;
   }
 
   return {
     reply: finalReply || 'Agent processing finished.',
     steps: steps,
-    workspaceMutated: workspaceMutated
+    workspaceMutated: workspaceMutated,
+    intakeQuestions: intakeQuestions || null  // null when no intake needed
   };
 }
 

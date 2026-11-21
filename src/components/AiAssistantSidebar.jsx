@@ -10,22 +10,19 @@ import {
   ChevronDown,
   ChevronUp,
   Cpu,
-  Loader
+  Loader,
+  HelpCircle,
+  CheckCircle2,
+  ClipboardList
 } from 'lucide-react';
 
 // Formats inline bold (**text**) and inline code (`code`)
 const formatInline = (text) => {
   if (!text) return '';
-  
-  // Split by bold patterns (**bold**)
   const parts = text.split(/\*\*([^*]+)\*\*/g);
-  
   return parts.flatMap((part, index) => {
     const isBold = index % 2 === 1;
-    
-    // Split by code block patterns (`code`)
     const codeParts = part.split(/`([^`]+)`/g);
-    
     const renderedCodeParts = codeParts.map((subPart, subIdx) => {
       const isCode = subIdx % 2 === 1;
       if (isCode) {
@@ -45,7 +42,6 @@ const formatInline = (text) => {
       }
       return subPart;
     });
-
     if (isBold) {
       return <strong key={index} style={{ fontWeight: 700, color: '#ffffff' }}>{renderedCodeParts}</strong>;
     }
@@ -56,17 +52,12 @@ const formatInline = (text) => {
 // Formats basic markdown lines (headers, lists, horizontal rules, paragraphs)
 const renderMarkdown = (text) => {
   if (!text) return null;
-  
   const lines = text.split('\n');
-  
   return lines.map((line, idx) => {
     const trimmed = line.trim();
-    
     if (trimmed === '---') {
       return <hr key={idx} style={{ margin: '14px 0', border: 'none', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }} />;
     }
-    
-    // Headers (#, ##, ###)
     if (trimmed.startsWith('### ')) {
       return <h4 key={idx} style={{ fontSize: '0.95rem', fontWeight: 700, marginTop: '12px', marginBottom: '6px', color: '#ffffff' }}>{formatInline(trimmed.substring(4))}</h4>;
     }
@@ -76,8 +67,6 @@ const renderMarkdown = (text) => {
     if (trimmed.startsWith('# ')) {
       return <h2 key={idx} style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: '16px', marginBottom: '10px', color: '#ffffff' }}>{formatInline(trimmed.substring(2))}</h2>;
     }
-    
-    // Bullet list items
     if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
       return (
         <ul key={idx} style={{ margin: '6px 0', paddingLeft: '18px', listStyleType: 'disc' }}>
@@ -87,8 +76,6 @@ const renderMarkdown = (text) => {
         </ul>
       );
     }
-    
-    // Numbered list items
     const numListMatch = trimmed.match(/^(\d+)\.\s+(.*)$/);
     if (numListMatch) {
       return (
@@ -99,12 +86,9 @@ const renderMarkdown = (text) => {
         </ol>
       );
     }
-    
-    // Paragraph spaces
     if (trimmed === '') {
       return <div key={idx} style={{ height: '6px' }} />;
     }
-    
     return (
       <p key={idx} style={{ margin: '6px 0', lineHeight: 1.5, color: '#e2e8f0' }}>
         {formatInline(line)}
@@ -112,6 +96,202 @@ const renderMarkdown = (text) => {
     );
   });
 };
+
+// ─── Intake Question Card Component ────────────────────────────────────────────
+function IntakeQuestionCard({ intake, onSubmit, onSkip, loading }) {
+  const [answers, setAnswers] = useState(() => {
+    const init = {};
+    (intake.questions || []).forEach(q => { init[q.id] = ''; });
+    return init;
+  });
+
+  const allAnswered = (intake.questions || []).every(q => answers[q.id]?.trim());
+
+  const handleSubmit = () => {
+    const answeredList = (intake.questions || []).map(q => ({
+      question: q.question,
+      answer: answers[q.id]?.trim() || '(not answered)'
+    }));
+    onSubmit(intake.goalDescription, answeredList);
+  };
+
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(79, 70, 229, 0.08) 100%)',
+      border: '1px solid rgba(124, 58, 237, 0.25)',
+      borderRadius: '14px',
+      padding: '16px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '14px'
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{
+          width: '28px', height: '28px', borderRadius: '8px',
+          background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+        }}>
+          <ClipboardList size={14} color="white" />
+        </div>
+        <div>
+          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#c4b5fd', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Quick Setup
+          </div>
+          <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+            "{intake.goalDescription}"
+          </div>
+        </div>
+      </div>
+
+      {/* Questions */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {(intake.questions || []).map((q, idx) => (
+          <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{
+              fontSize: '0.82rem',
+              color: '#e2e8f0',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '6px'
+            }}>
+              <span style={{
+                background: 'rgba(124, 58, 237, 0.2)',
+                color: '#a78bfa',
+                borderRadius: '4px',
+                padding: '1px 6px',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                flexShrink: 0,
+                marginTop: '1px'
+              }}>Q{idx + 1}</span>
+              {q.question}
+            </label>
+
+            {q.type === 'choice' && q.options ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {q.options.map(opt => {
+                  const isSelected = answers[q.id] === opt;
+                  return (
+                    <button
+                      key={opt}
+                      onClick={() => setAnswers(prev => ({ ...prev, [q.id]: opt }))}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '20px',
+                        border: isSelected ? '1px solid #7c3aed' : '1px solid rgba(255,255,255,0.12)',
+                        background: isSelected ? 'rgba(124,58,237,0.25)' : 'rgba(255,255,255,0.04)',
+                        color: isSelected ? '#c4b5fd' : '#94a3b8',
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        fontWeight: isSelected ? 600 : 400,
+                        transition: 'all 0.15s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px'
+                      }}
+                    >
+                      {isSelected && <CheckCircle2 size={11} style={{ color: '#a78bfa' }} />}
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : q.type === 'syllabus' ? (
+              <textarea
+                value={answers[q.id]}
+                onChange={e => setAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                placeholder={q.hint || 'Paste your syllabus, topic list, or any content here...'}
+                rows={4}
+                style={{
+                  width: '100%',
+                  background: 'rgba(0,0,0,0.25)',
+                  border: answers[q.id] ? '1px solid rgba(124,58,237,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '10px',
+                  padding: '10px 12px',
+                  color: '#f1f5f9',
+                  fontSize: '0.8rem',
+                  resize: 'vertical',
+                  outline: 'none',
+                  lineHeight: 1.5,
+                  fontFamily: 'inherit',
+                  transition: 'border-color 0.2s ease'
+                }}
+              />
+            ) : (
+              <input
+                type="text"
+                value={answers[q.id]}
+                onChange={e => setAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                placeholder={q.hint || 'Type your answer...'}
+                onKeyDown={e => { if (e.key === 'Enter' && allAnswered) handleSubmit(); }}
+                style={{
+                  width: '100%',
+                  background: 'rgba(0,0,0,0.25)',
+                  border: answers[q.id] ? '1px solid rgba(124,58,237,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '10px',
+                  padding: '9px 12px',
+                  color: '#f1f5f9',
+                  fontSize: '0.82rem',
+                  outline: 'none',
+                  transition: 'border-color 0.2s ease',
+                  fontFamily: 'inherit'
+                }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Action row */}
+      <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+        <button
+          onClick={handleSubmit}
+          disabled={loading || !allAnswered}
+          style={{
+            flex: 1,
+            background: allAnswered
+              ? 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)'
+              : 'rgba(255,255,255,0.05)',
+            border: allAnswered ? 'none' : '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '10px',
+            padding: '10px',
+            color: allAnswered ? 'white' : '#64748b',
+            fontSize: '0.82rem',
+            fontWeight: 600,
+            cursor: allAnswered ? 'pointer' : 'not-allowed',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          {loading ? <Loader size={13} className="spinner" /> : <CheckCircle2 size={13} />}
+          Build My Goal
+        </button>
+        <button
+          onClick={onSkip}
+          disabled={loading}
+          style={{
+            padding: '10px 14px',
+            background: 'transparent',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '10px',
+            color: '#64748b',
+            fontSize: '0.78rem',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+            transition: 'color 0.2s ease'
+          }}
+        >
+          Skip
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function AiAssistantSidebar({
   isOpen,
@@ -133,6 +313,8 @@ export default function AiAssistantSidebar({
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [expandedSteps, setExpandedSteps] = useState({});
+  // Tracks active intake question session (if any)
+  const [activeIntake, setActiveIntake] = useState(null);
 
   const messagesEndRef = useRef(null);
 
@@ -152,10 +334,10 @@ export default function AiAssistantSidebar({
     const userText = inputValue;
     setInputValue('');
     
-    // Add User message
     const updatedMessages = [...messages, { role: 'user', content: userText }];
     setMessages(updatedMessages);
     setLoading(true);
+    setActiveIntake(null); // clear any pending intake on new message
 
     try {
       const response = await fetch(`${API_URL}/assistant/chat`, {
@@ -166,7 +348,7 @@ export default function AiAssistantSidebar({
         },
         body: JSON.stringify({
           message: userText,
-          chatHistory: updatedMessages.slice(0, -1) // Send history excluding the last message
+          chatHistory: updatedMessages.slice(0, -1)
         })
       });
 
@@ -176,13 +358,18 @@ export default function AiAssistantSidebar({
         throw new Error(data.message || 'Error communicating with assistant');
       }
 
+      // Handle intake questions returned by the agent
+      if (data.intakeQuestions) {
+        setActiveIntake(data.intakeQuestions);
+      }
+
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: data.reply,
-        steps: data.steps || []
+        steps: data.steps || [],
+        intakeQuestions: data.intakeQuestions || null
       }]);
 
-      // If database was modified (tasks or goals scheduled/deleted), notify taskPlanner dashboard
       if (data.workspaceMutated && onMutation) {
         onMutation();
       }
@@ -199,6 +386,71 @@ export default function AiAssistantSidebar({
     }
   };
 
+  // Called when user submits answers to intake questions
+  const handleIntakeSubmit = async (goalDescription, answeredList) => {
+    setActiveIntake(null);
+    setLoading(true);
+
+    // Build a rich follow-up message that includes all answers
+    const answerText = answeredList.map(a => `• ${a.question}: ${a.answer}`).join('\n');
+    const followUpMessage = `Here are my answers for "${goalDescription}":\n${answerText}\n\nPlease now create this goal and I'll generate a plan for it.`;
+
+    const updatedMessages = [...messages, { role: 'user', content: followUpMessage }];
+    setMessages(updatedMessages);
+
+    try {
+      const response = await fetch(`${API_URL}/assistant/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
+        },
+        body: JSON.stringify({
+          message: followUpMessage,
+          chatHistory: updatedMessages.slice(0, -1)
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error communicating with assistant');
+      }
+
+      if (data.intakeQuestions) {
+        setActiveIntake(data.intakeQuestions);
+      }
+
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: data.reply,
+        steps: data.steps || [],
+        intakeQuestions: data.intakeQuestions || null
+      }]);
+
+      if (data.workspaceMutated && onMutation) {
+        onMutation();
+      }
+    } catch (err) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `Sorry, something went wrong: ${err.message}`,
+        steps: []
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleIntakeSkip = () => {
+    setActiveIntake(null);
+    setMessages(prev => [...prev, {
+      role: 'assistant',
+      content: "No problem! I'll create the goal with the information I have. You can always refine the plan later from the Planner tab.",
+      steps: []
+    }]);
+  };
+
   const handleClearChat = () => {
     if (window.confirm('Are you sure you want to clear your chat history?')) {
       const initialMsg = [
@@ -209,6 +461,7 @@ export default function AiAssistantSidebar({
         }
       ];
       setMessages(initialMsg);
+      setActiveIntake(null);
       localStorage.setItem('goalgrid_ai_chat', JSON.stringify(initialMsg));
     }
   };
@@ -230,6 +483,8 @@ export default function AiAssistantSidebar({
         return <Globe size={14} className="text-blue-400" />;
       case 'get_user_data':
         return <Database size={14} className="text-emerald-400" />;
+      case 'ask_clarifying_questions':
+        return <HelpCircle size={14} style={{ color: '#f59e0b' }} />;
       default:
         return <Database size={14} className="text-violet-400" />;
     }
@@ -261,6 +516,9 @@ export default function AiAssistantSidebar({
           const isUser = msg.role === 'user';
           const hasSteps = msg.steps && msg.steps.length > 0;
           const isStepsOpen = expandedSteps[index];
+          // Show the intake card attached to this message if it's still active
+          const showIntakeHere = msg.intakeQuestions && activeIntake &&
+            activeIntake.goalDescription === msg.intakeQuestions.goalDescription;
 
           return (
             <div key={index} className={`ai-message-row ${isUser ? 'user-aligned' : 'ai-aligned'}`}>
@@ -274,6 +532,16 @@ export default function AiAssistantSidebar({
                 <div className={`ai-message-bubble ${isUser ? 'user-bubble' : 'ai-bubble'}`}>
                   {renderMarkdown(msg.content)}
                 </div>
+
+                {/* Intake Question Card — shown directly below the AI message that triggered it */}
+                {showIntakeHere && (
+                  <IntakeQuestionCard
+                    intake={activeIntake}
+                    onSubmit={handleIntakeSubmit}
+                    onSkip={handleIntakeSkip}
+                    loading={loading}
+                  />
+                )}
 
                 {/* Thinking Log Accordion */}
                 {hasSteps && (
@@ -321,7 +589,7 @@ export default function AiAssistantSidebar({
             </div>
             <div className="ai-message-bubble ai-bubble thinking-bubble">
               <Loader className="spinner" size={14} style={{ marginRight: '8px' }} />
-              <span>Thinking & running planning loop...</span>
+              <span>Thinking &amp; running planning loop...</span>
             </div>
           </div>
         )}
@@ -334,16 +602,16 @@ export default function AiAssistantSidebar({
           <p className="suggest-title">⚡ Quick suggestions</p>
           <div className="ai-suggestions-grid">
             <button onClick={() => selectQuickAction("Research top 3 workout habits and add a Morning Workout routine block at 07:00 AM")}>
-              🏋️ Research & Add Routine
+              🏋️ Research &amp; Add Routine
             </button>
-            <button onClick={() => selectQuickAction("Plan a 4-hour study task for final exams today and add it to my calendar")}>
-              📖 Plan Study Tasks
+            <button onClick={() => selectQuickAction("I want to prepare for my exam")}>
+              📖 Plan Exam Prep
             </button>
             <button onClick={() => selectQuickAction("Draft a quick daily reflection journal entry for today about learning React")}>
               📝 Write Daily Journal
             </button>
-            <button onClick={() => selectQuickAction("Add a new long-term goal called 'Launch Startup app'")}>
-              🚀 Add High-Level Goal
+            <button onClick={() => selectQuickAction("I want to achieve a new goal")}>
+              🚀 Set a New Goal
             </button>
           </div>
         </div>
@@ -355,7 +623,7 @@ export default function AiAssistantSidebar({
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Ask Copilot agent..."
+          placeholder={activeIntake ? 'Answer above, or type to continue...' : 'Ask Copilot agent...'}
           disabled={loading}
           autoFocus
         />
@@ -725,6 +993,15 @@ export default function AiAssistantSidebar({
 
         .animate-pulse {
           animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .spinner {
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
 
         @keyframes pulse {

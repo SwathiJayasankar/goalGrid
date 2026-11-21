@@ -138,11 +138,107 @@ router.post('/sync', auth, async (req, res) => {
   }
 });
 
+// @route   POST api/planner/pre-plan-questions
+// @desc    Generate 2-4 smart clarifying questions before plan generation
+// @access  Private
+router.post('/pre-plan-questions', auth, async (req, res) => {
+  const { goal, fixedRoutine, calendarTasks } = req.body;
+
+  if (!goal || !goal.goal) {
+    return res.status(400).json({ message: 'Goal is required' });
+  }
+
+  try {
+    const apiKey = process.env.GROQ_API_KEY;
+    const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+
+    if (!apiKey) {
+      return res.status(500).json({ message: 'Server configuration error: Groq API key is missing.' });
+    }
+
+    // Summarize the user's schedule so the AI can ask smarter questions
+    const routineSummary = (fixedRoutine || []).map(r => `${r.time}: ${r.text}`).join(', ') || 'No routine set';
+    const upcomingDates = Object.keys(calendarTasks || {})
+      .filter(d => new Date(d) >= new Date())
+      .slice(0, 5)
+      .join(', ') || 'None';
+
+    const systemPrompt = `You are a smart planning assistant. A user has a goal they want to plan for.
+Your job is to generate 2-4 targeted clarifying questions that are SPECIFIC to this goal — not generic — so that you can create an accurate, personalized plan.
+
+RULES:
+- Ask questions whose answers would meaningfully change the plan output.
+- For exam/quiz goals: ask about syllabus (do they have one or want AI to pick topics?), hours per day available, and whether they want topic-specific tasks or just timed study blocks.
+- For project goals: ask about deadline, hours per week, key milestones already known.
+- For fitness/health goals: ask about schedule constraints, current level, and equipment.
+- If the deadline is already mentioned in the goal text, do NOT ask for it again.
+- Skip any question whose answer is obvious from the goal text.
+- Return STRICT JSON only, no extra text.
+
+OUTPUT FORMAT:
+{
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Question text here",
+      "hint": "e.g. Short example answer",
+      "type": "text|choice|syllabus",
+      "options": ["Option A", "Option B"] // only if type is choice
+    }
+  ]
+}`;
+
+    const userContent = `Goal: "${goal.goal}"
+User's daily routine: ${routineSummary}
+User has upcoming tasks on: ${upcomingDates}
+Today: ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+
+Generate 2-4 targeted questions for this specific goal.`;
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: model,
+        max_tokens: 800,
+        temperature: 0.2,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userContent }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Groq API returned ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) throw new Error('No AI content returned');
+
+    // Parse JSON from AI response
+    const start = content.indexOf('{');
+    const end = content.lastIndexOf('}');
+    if (start === -1 || end === -1) throw new Error('No JSON in response');
+
+    const parsed = JSON.parse(content.substring(start, end + 1));
+    res.json({ questions: parsed.questions || [] });
+  } catch (err) {
+    console.error('Pre-plan questions error:', err);
+    res.status(500).json({ message: 'Error generating questions: ' + err.message, questions: [] });
+  }
+});
+
 // @route   POST api/planner/generate-plan
 // @desc    Generate personalized plan using Groq API securely
 // @access  Private
 router.post('/generate-plan', auth, async (req, res) => {
-  const { goal, feedback, fixedRoutine, calendarTasks } = req.body;
+  const { goal, feedback, fixedRoutine, calendarTasks, userContext } = req.body;
 
   if (!goal) {
     return res.status(400).json({ message: 'Goal is required' });
@@ -221,18 +317,24 @@ router.post('/generate-plan', auth, async (req, res) => {
         "tips": ["Strategic advice on avoiding specific blockers related to this goal"]
       }`;
 
+    // Build user context block from intake interview answers (if provided)
+    const userContextBlock = userContext && userContext.length > 0
+      ? `\nUSER'S CLARIFIED CONTEXT (HIGH PRIORITY — follow these exactly):\n${userContext.map(a => `- ${a.question}: ${a.answer}`).join('\n')}\n`
+      : '';
+
     const userContent = `Current Date/Time: ${new Date().toLocaleString()} (Today is a ${new Date().toLocaleDateString('en-US', { weekday: 'long' })})
               
 Goal: "${goal.goal}"
 ${feedback ? `\nUSER SPECIFIC REFINEMENT REQUEST: "${feedback}"\n` : ''}
-
+${userContextBlock}
 USER'S DAILY ROUTINE (NON-NEGOTIABLE):
 ${routineContext}
 
 EXISTING TASKS & APPOINTMENTS (DO NOT OVERLAP):
 ${upcomingTasks || 'No specific appointments yet.'}
 
-Task: ${feedback ? 'Update and refine the existing plan based on my feedback. ' : 'Generate a plan for the new goal that integrates SEAMLESSLY with my existing schedule. '} Do not double-book me. 
+Task: ${feedback ? 'Update and refine the existing plan based on my feedback. ' : 'Generate a plan for the new goal that integrates SEAMLESSLY with my existing schedule. '} Do not double-book me.
+${userContext && userContext.length > 0 ? 'IMPORTANT: The user provided specific context above — use it to personalize every aspect of the plan. For example: if they pasted their own syllabus, plan ONLY those topics. If they specified hours per day, never exceed that. If they want time blocks without topic names, omit topics.' : ''}
 
 CALENDAR CONTEXT:
 ${(() => {

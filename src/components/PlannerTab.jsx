@@ -1,5 +1,161 @@
-import React from 'react';
-import { AlertCircle, Loader, TrendingUp } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { AlertCircle, Loader, TrendingUp, CheckCircle2, ClipboardList, Sparkles } from 'lucide-react';
+
+// ─── Intake Question Card (inline, for Planner tab) ────────────────────────
+function PlanIntakeCard({ questions, goalDescription, onSubmit, onSkip, loading }) {
+  const [answers, setAnswers] = useState(() => {
+    const init = {};
+    (questions || []).forEach(q => { init[q.id] = ''; });
+    return init;
+  });
+
+  const allAnswered = (questions || []).every(q => answers[q.id]?.trim());
+
+  const sharedInputStyle = {
+    width: '100%',
+    background: 'rgba(0,0,0,0.25)',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: '10px',
+    padding: '10px 12px',
+    color: '#f1f5f9',
+    fontSize: '0.85rem',
+    outline: 'none',
+    fontFamily: 'inherit',
+    transition: 'border-color 0.2s ease'
+  };
+
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, rgba(124,58,237,0.07) 0%, rgba(79,70,229,0.07) 100%)',
+      border: '1px solid rgba(124,58,237,0.22)',
+      borderRadius: '16px',
+      padding: '20px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '16px'
+    }}>
+      {/* header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{
+          width: '34px', height: '34px', borderRadius: '10px',
+          background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+        }}>
+          <ClipboardList size={16} color="white" />
+        </div>
+        <div>
+          <div style={{ fontWeight: 700, color: '#c4b5fd', fontSize: '0.9rem', marginBottom: '2px' }}>
+            Before we generate your plan...
+          </div>
+          <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+            {questions.length} quick question{questions.length !== 1 ? 's' : ''} to make the plan actually useful for you
+          </div>
+        </div>
+      </div>
+
+      {/* questions */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        {(questions || []).map((q, idx) => (
+          <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
+            <label style={{
+              fontSize: '0.85rem', color: '#e2e8f0', fontWeight: 600,
+              display: 'flex', alignItems: 'flex-start', gap: '7px'
+            }}>
+              <span style={{
+                background: 'rgba(124,58,237,0.2)', color: '#a78bfa',
+                borderRadius: '4px', padding: '2px 7px', fontSize: '0.72rem',
+                fontWeight: 700, flexShrink: 0, marginTop: '1px'
+              }}>Q{idx + 1}</span>
+              {q.question}
+            </label>
+
+            {q.type === 'choice' && q.options ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
+                {q.options.map(opt => {
+                  const sel = answers[q.id] === opt;
+                  return (
+                    <button key={opt} onClick={() => setAnswers(p => ({ ...p, [q.id]: opt }))}
+                      style={{
+                        padding: '7px 14px', borderRadius: '20px',
+                        border: sel ? '1px solid #7c3aed' : '1px solid rgba(255,255,255,0.12)',
+                        background: sel ? 'rgba(124,58,237,0.25)' : 'rgba(255,255,255,0.04)',
+                        color: sel ? '#c4b5fd' : '#94a3b8',
+                        fontSize: '0.8rem', cursor: 'pointer',
+                        fontWeight: sel ? 600 : 400,
+                        display: 'flex', alignItems: 'center', gap: '5px',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {sel && <CheckCircle2 size={12} style={{ color: '#a78bfa' }} />}
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : q.type === 'syllabus' ? (
+              <textarea
+                value={answers[q.id]}
+                onChange={e => setAnswers(p => ({ ...p, [q.id]: e.target.value }))}
+                placeholder={q.hint || 'Paste your syllabus, topic list, or notes here...'}
+                rows={5}
+                style={{ ...sharedInputStyle, resize: 'vertical', lineHeight: 1.5,
+                  border: answers[q.id] ? '1px solid rgba(124,58,237,0.4)' : '1px solid rgba(255,255,255,0.12)'
+                }}
+              />
+            ) : (
+              <input
+                type="text"
+                value={answers[q.id]}
+                onChange={e => setAnswers(p => ({ ...p, [q.id]: e.target.value }))}
+                placeholder={q.hint || 'Type your answer...'}
+                style={{ ...sharedInputStyle,
+                  border: answers[q.id] ? '1px solid rgba(124,58,237,0.4)' : '1px solid rgba(255,255,255,0.12)'
+                }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* actions */}
+      <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+        <button
+          onClick={() => {
+            const ctx = (questions || []).map(q => ({ question: q.question, answer: answers[q.id]?.trim() || '(not specified)' }));
+            onSubmit(ctx);
+          }}
+          disabled={loading || !allAnswered}
+          className="generate-btn"
+          style={{
+            flex: 1,
+            background: allAnswered ? 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)' : 'rgba(255,255,255,0.05)',
+            opacity: allAnswered ? 1 : 0.7,
+            cursor: allAnswered ? 'pointer' : 'not-allowed'
+          }}
+        >
+          {loading ? <Loader className="spin" size={16} /> : <Sparkles size={16} />}
+          Generate Personalized Plan
+        </button>
+        <button
+          onClick={onSkip}
+          disabled={loading}
+          style={{
+            padding: '10px 16px',
+            background: 'transparent',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '10px',
+            color: '#64748b',
+            fontSize: '0.82rem',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          Skip &amp; Generate
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function PlannerTab({
   goals,
@@ -13,9 +169,56 @@ export default function PlannerTab({
   integratePlanToSchedule,
   planFeedback,
   setPlanFeedback,
-  categories
+  categories,
+  token,
+  API_URL,
+  fixedRoutine,
+  calendarTasks
 }) {
   const goal = goals.find(g => g.id === selectedGoal);
+
+  // Pre-plan intake state
+  const [intakeState, setIntakeState] = useState({}); // keyed by goal.id
+  // intakeState[goalId] = { status: 'idle'|'loading'|'ready'|'skipped', questions: [] }
+
+  const startIntake = useCallback(async (goalId) => {
+    const g = goals.find(x => x.id === goalId);
+    if (!g) return;
+
+    setIntakeState(prev => ({ ...prev, [goalId]: { status: 'loading', questions: [] } }));
+
+    try {
+      const res = await fetch(`${API_URL}/planner/pre-plan-questions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+        body: JSON.stringify({ goal: g, fixedRoutine: fixedRoutine || [], calendarTasks: calendarTasks || {} })
+      });
+      const data = await res.json();
+      const qs = data.questions || [];
+      if (qs.length === 0) {
+        // No questions returned — go straight to generation
+        setIntakeState(prev => ({ ...prev, [goalId]: { status: 'skipped', questions: [] } }));
+        generatePlan(goalId);
+      } else {
+        setIntakeState(prev => ({ ...prev, [goalId]: { status: 'ready', questions: qs } }));
+      }
+    } catch (err) {
+      // On error, skip intake and generate directly
+      setIntakeState(prev => ({ ...prev, [goalId]: { status: 'skipped', questions: [] } }));
+      generatePlan(goalId);
+    }
+  }, [goals, API_URL, token, fixedRoutine, calendarTasks, generatePlan]);
+
+  const handleIntakeSubmit = useCallback((goalId, userContext) => {
+    setIntakeState(prev => ({ ...prev, [goalId]: { status: 'skipped', questions: [] } }));
+    generatePlan(goalId, '', userContext);
+  }, [generatePlan]);
+
+  const handleIntakeSkip = useCallback((goalId) => {
+    setIntakeState(prev => ({ ...prev, [goalId]: { status: 'skipped', questions: [] } }));
+    generatePlan(goalId);
+  }, [generatePlan]);
+
 
   return (
     <div className="planner-tab-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
@@ -402,12 +605,47 @@ export default function PlannerTab({
             </div>
           );
         })()
-      ) : (
-        <button className="generate-btn" onClick={() => generatePlan(selectedGoal)} disabled={loadingPlan !== null}>
-          {loadingPlan !== null ? <Loader className="spin" size={16} /> : <TrendingUp size={16} />}
-          Generate AI Plan
-        </button>
-      )}
+      ) : (() => {
+        const intake = intakeState[selectedGoal];
+        // Phase 1: intake loading
+        if (intake?.status === 'loading') {
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '28px 0' }}>
+              <Loader className="spin" size={22} style={{ color: '#7c3aed' }} />
+              <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Preparing personalized questions...</p>
+            </div>
+          );
+        }
+        // Phase 2: questions ready
+        if (intake?.status === 'ready' && intake.questions.length > 0) {
+          return (
+            <PlanIntakeCard
+              questions={intake.questions}
+              goalDescription={goal.goal}
+              onSubmit={(ctx) => handleIntakeSubmit(selectedGoal, ctx)}
+              onSkip={() => handleIntakeSkip(selectedGoal)}
+              loading={loadingPlan === selectedGoal}
+            />
+          );
+        }
+        // Phase 3: generating (after intake or after skip)
+        if (loadingPlan === selectedGoal) {
+          return (
+            <div className="loading-spinner">
+              <div className="spinner"></div>
+              <p style={{ color: '#cbd5e1' }}>Generating your personalized plan...</p>
+            </div>
+          );
+        }
+        // Default: show the start button that triggers intake first
+        return (
+          <button className="generate-btn" onClick={() => startIntake(selectedGoal)} disabled={loadingPlan !== null}>
+            <Sparkles size={16} />
+            Generate AI Plan
+          </button>
+        );
+      })()
+      }
     </div>
     )}
     </div>
